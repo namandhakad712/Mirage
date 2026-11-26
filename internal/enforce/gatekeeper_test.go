@@ -161,6 +161,84 @@ func TestMaxSharePctExposesBudget(t *testing.T) {
 	}
 }
 
+func TestIsBanned(t *testing.T) {
+	g := NewGatekeeper(Budgets{MaxBansPerMinute: 10, MaxConcurrentBans: 10}, nil)
+	// No record yet: never banned.
+	if _, ok := g.IsBanned("198.51.100.7", 1_000); ok {
+		t.Fatalf("unrecorded address reports banned")
+	}
+	g.RecordBan("198.51.100.7", 1_000, 61_000)
+	// Active ban: banned until its expiry.
+	exp, ok := g.IsBanned("198.51.100.7", 60_999)
+	if !ok || exp != 61_000 {
+		t.Fatalf("active ban = (%d, %v), want (61000, true)", exp, ok)
+	}
+	// Expired exactly at nowMs: already inactive, like store.BanRecords.
+	if _, ok := g.IsBanned("198.51.100.7", 61_000); ok {
+		t.Fatalf("ban expired exactly at nowMs still reports banned")
+	}
+	// Another address is untouched.
+	if _, ok := g.IsBanned("198.51.100.8", 1_000); ok {
+		t.Fatalf("different address reports banned")
+	}
+}
+
+func TestIsBannedLongestExpiryWins(t *testing.T) {
+	// A re-ban inside the first TTL leaves two active records; the address
+	// stays banned until the LONGER one lapses.
+	g := NewGatekeeper(Budgets{MaxBansPerMinute: 10, MaxConcurrentBans: 10}, nil)
+	g.RecordBan("198.51.100.7", 1_000, 61_000)
+	g.RecordBan("198.51.100.7", 2_000, 121_000)
+	exp, ok := g.IsBanned("198.51.100.7", 100_000)
+	if !ok || exp != 121_000 {
+		t.Fatalf("two active bans = (%d, %v), want (121000, true)", exp, ok)
+	}
+	// Only the longer one remains active.
+	exp, ok = g.IsBanned("198.51.100.7", 121_000)
+	if ok || exp != 0 {
+		t.Fatalf("after both expire = (%d, %v), want (0, false)", exp, ok)
+	}
+}
+
+func TestRevokeBanExpiresActiveOnly(t *testing.T) {
+	g := NewGatekeeper(Budgets{MaxBansPerMinute: 10, MaxConcurrentBans: 10}, nil)
+	g.RecordBan("198.51.100.7", 1_000, 61_000)
+	g.RecordBan("198.51.100.8", 1_000, 61_000)
+	// Revoking a never-banned address is a no-op, not an error (I5).
+	g.RevokeBan("198.51.100.9", 5_000)
+	if _, ok := g.IsBanned("198.51.100.9", 5_000); ok {
+		t.Fatalf("revoked never-banned address reports banned")
+	}
+	// One address revoked, the other untouched.
+	g.RevokeBan("198.51.100.7", 5_000)
+	if _, ok := g.IsBanned("198.51.100.7", 5_000); ok {
+		t.Fatalf("revoked address still banned")
+	}
+	if _, ok := g.IsBanned("198.51.100.8", 5_000); !ok {
+		t.Fatalf("untouched address lost its ban")
+	}
+}
+
+func TestRevokeBanIdempotentNeverExtends(t *testing.T) {
+	g := NewGatekeeper(Budgets{MaxBansPerMinute: 10, MaxConcurrentBans: 10}, nil)
+	g.RecordBan("198.51.100.7", 1_000, 10_000)
+	g.RevokeBan("198.51.100.7", 5_000)
+	// A second revoke at a LATER time must not push the expiry forward:
+	// the record stays expired at 5_000.
+	g.RevokeBan("198.51.100.7", 7_000)
+	if exp, ok := g.IsBanned("198.51.100.7", 6_000); ok {
+		t.Fatalf("double revoke extended the ban to %d", exp)
+	}
+	// The freed concurrency cap proves the ban is truly gone: with
+	// MaxConcurrentBans 1 a new proposal now allows.
+	tight := NewGatekeeper(Budgets{MaxBansPerMinute: 10, MaxConcurrentBans: 1}, nil)
+	tight.RecordBan("198.51.100.7", 1_000, 61_000)
+	tight.RevokeBan("198.51.100.7", 2_000)
+	if got := tight.Evaluate("198.51.100.8", 2_001); got != OutcomeAllow {
+		t.Fatalf("after revoke, cap still occupied = %v, want allow", got)
+	}
+}
+
 func TestGatekeeperConcurrentEvaluateAndRecord(t *testing.T) {
 	// The gatekeeper sits on the hot enforcement path; Evaluate and
 	// RecordBan arrive from multiple goroutines. Run under -race.
