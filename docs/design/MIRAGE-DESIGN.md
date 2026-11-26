@@ -1,5 +1,10 @@
-# Mirage: Production Design for an Open-Source Defense Layer Against AI Attack Agents
-
+---
+layout: doc
+title: "Production Design"
+description: "The full design document Mirage is built from: architecture, modes, data flow, failure philosophy."
+category: project
+order: 8
+---
 Working codename (rename freely) · Design draft v0.1 · November 20, 2026
 
 ## 0. Framing: what we are really building

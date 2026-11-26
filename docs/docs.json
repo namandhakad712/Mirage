@@ -1,0 +1,246 @@
+{
+  "name": "Mirage",
+  "tagline": "Deception-layer defense against AI-driven attack agents",
+  "description": "Mirage is an open-source deception layer: every request is scored by deterministic signals, attackers are routed into decoy personas, and the whole system fails open by design.",
+  "url": "https://namandhakad712.github.io/Mirage",
+  "repository": "https://github.com/namandhakad712/Mirage",
+  "license": "AGPL-3.0",
+  "spec_version": "1.1.0",
+  "protocol_version": "1",
+  "sections": [
+    {
+      "id": "guide",
+      "title": "Guide",
+      "pages": [
+        {
+          "title": "Guide",
+          "description": "The Mirage guide: what it is, how to run it, and the order to read the ten pages that cover detection, decoys, modes and operations.",
+          "path": "guide/index.md",
+          "url": "/Mirage/guide/"
+        },
+        {
+          "title": "Getting Started",
+          "description": "From a fresh clone to a running look-mode Mirage instance: build, gates, minimal config, serve, and reading your first events.",
+          "path": "guide/getting-started.md",
+          "url": "/Mirage/guide/getting-started.html"
+        },
+        {
+          "title": "Architecture",
+          "description": "The Mirage decision path end-to-end: adapter request to engine scoring, verdict ladder, actions, events, store and connectors.",
+          "path": "guide/architecture.md",
+          "url": "/Mirage/guide/architecture.html"
+        },
+        {
+          "title": "Signals",
+          "description": "The 11 detection signals of SIGNALS v1.1.0: what each one sees, its fixed weight and class, a concrete example, and its gating rules.",
+          "path": "guide/signals.md",
+          "url": "/Mirage/guide/signals.html"
+        },
+        {
+          "title": "Verdicts",
+          "description": "The Mirage verdict ladder with exact thresholds, the request-vs-cumulative score arithmetic, the protected-route cap and worked numeric examples.",
+          "path": "guide/verdicts.md",
+          "url": "/Mirage/guide/verdicts.html"
+        },
+        {
+          "title": "Decoys",
+          "description": "The Mirage decoy catalog: personas, entries, leads and honeytokens, how serving works, render determinism, and writing your own entry.",
+          "path": "guide/decoys.md",
+          "url": "/Mirage/guide/decoys.html"
+        },
+        {
+          "title": "Modes",
+          "description": "The three Mirage modes — look, tripwires, protect — as an operational ladder, with the kill switch, the enforcement opt-in and what each mode does.",
+          "path": "guide/modes.md",
+          "url": "/Mirage/guide/modes.html"
+        },
+        {
+          "title": "Tooling",
+          "description": "Every quality gate and lab in the Mirage repo: the Makefile targets, the golden-vector generator, the fault-injection matrix and the docs-site gates.",
+          "path": "guide/tooling.md",
+          "url": "/Mirage/guide/tooling.html"
+        },
+        {
+          "title": "Operations",
+          "description": "The Mirage production runbook: choosing a store, budget tuning, connector selection, dashboard usage, ban renewal and fail-open behavior.",
+          "path": "guide/operations.md",
+          "url": "/Mirage/guide/operations.html"
+        },
+        {
+          "title": "Testing",
+          "description": "How Mirage is tested: golden vectors, the race suite, the pollution suite, the fault matrix, worker parity, and how to add a new vector.",
+          "path": "guide/testing.md",
+          "url": "/Mirage/guide/testing.html"
+        },
+        {
+          "title": "FAQ",
+          "description": "Twelve honest answers about Mirage: why no ML, WAF replacement, CGNAT handling, false positives, licensing, performance and limits.",
+          "path": "guide/faq.md",
+          "url": "/Mirage/guide/faq.html"
+        }
+      ]
+    },
+    {
+      "id": "reference",
+      "title": "Reference",
+      "pages": [
+        {
+          "title": "Reference",
+          "description": "The Mirage reference shelf: every configuration key, every CLI subcommand, the shared data files, and the normative specs.",
+          "path": "reference/index.md",
+          "url": "/Mirage/reference/"
+        },
+        {
+          "title": "Configuration Reference",
+          "description": "Every key of the Mirage site config with its type, default, validation bound, what it controls, and the invariant behind it.",
+          "path": "reference/config.md",
+          "url": "/Mirage/reference/config.html"
+        },
+        {
+          "title": "CLI Reference",
+          "description": "The mirage CLI: serve, doctor, init, posture, replay and version, with flags, exit codes and the --json output shapes.",
+          "path": "reference/cli.md",
+          "url": "/Mirage/reference/cli.html"
+        }
+      ]
+    },
+    {
+      "id": "spec",
+      "title": "Specifications",
+      "pages": [
+        {
+          "title": "Signal Specification",
+          "description": "SIGNALS v1.1.0 — the eleven signals, fixed weights and classes, gating rules, evaluation order and the verdict ladder.",
+          "path": "spec/SIGNALS.md",
+          "url": "/Mirage/spec/SIGNALS.html"
+        },
+        {
+          "title": "Adapter Protocol",
+          "description": "The v1 contract between an edge adapter and Mirage Core: the request, the decision, the action set and the event.",
+          "path": "spec/ADAPTER-PROTOCOL.md",
+          "url": "/Mirage/spec/ADAPTER-PROTOCOL.html"
+        },
+        {
+          "title": "Decoy Catalog",
+          "description": "The v1 decoy catalog format: personas, entries, leads, tokens, reserved values and validation rules.",
+          "path": "spec/DECOY-CATALOG.md",
+          "url": "/Mirage/spec/DECOY-CATALOG.html"
+        },
+        {
+          "title": "Golden Vectors — Hand Computed",
+          "description": "The arithmetic behind all 20 golden vector cases, computed by hand and cross-checked by tools/gen_vectors.py.",
+          "path": "spec/golden-vectors/HAND-COMPUTED.md",
+          "url": "/Mirage/spec/golden-vectors/HAND-COMPUTED.html"
+        }
+      ]
+    },
+    {
+      "id": "deploy",
+      "title": "Deployment",
+      "pages": [
+        {
+          "title": "Quickstart",
+          "description": "The shortest honest path to a running Mirage: build, check, configure, watch the first decisions.",
+          "path": "deploy/quickstart.md",
+          "url": "/Mirage/deploy/quickstart.html"
+        },
+        {
+          "title": "nginx Topology",
+          "description": "Run Mirage as a transparent proxy behind nginx: X-Forwarded-For handling, trusted proxies, the deny map and the fail-open contract.",
+          "path": "deploy/nginx.md",
+          "url": "/Mirage/deploy/nginx.html"
+        },
+        {
+          "title": "Cloudflare Worker",
+          "description": "Build, configure and deploy the zero-dependency worker port, including secrets and shared-data regeneration.",
+          "path": "deploy/cloudflare-worker.md",
+          "url": "/Mirage/deploy/cloudflare-worker.html"
+        }
+      ]
+    },
+    {
+      "id": "project",
+      "title": "Project",
+      "pages": [
+        {
+          "title": "About",
+          "description": "What Mirage is, what runs today, and where the repository's honest status line stands — the README, unedited.",
+          "path": "about.md",
+          "url": "/Mirage/about.html"
+        },
+        {
+          "title": "Changelog",
+          "description": "Every notable change to Mirage, round by round, following Keep a Changelog.",
+          "path": "changelog.md",
+          "url": "/Mirage/changelog.html"
+        },
+        {
+          "title": "Charter",
+          "description": "The mission, the non-goals, and the line Mirage refuses to cross.",
+          "path": "charter.md",
+          "url": "/Mirage/charter.html"
+        },
+        {
+          "title": "Invariants",
+          "description": "I1-I15: the properties every line of Mirage must preserve, and the tests that hold them.",
+          "path": "invariants.md",
+          "url": "/Mirage/invariants.html"
+        },
+        {
+          "title": "Claims Policy",
+          "description": "What we claim about Mirage, what we refuse to claim, and the evidence required before either.",
+          "path": "claims-policy.md",
+          "url": "/Mirage/claims-policy.html"
+        },
+        {
+          "title": "Known Limits",
+          "description": "Where Mirage does not help — the honest boundary list.",
+          "path": "known-limits.md",
+          "url": "/Mirage/known-limits.html"
+        },
+        {
+          "title": "Vendor Notes",
+          "description": "The pinned CrowdSec LAPI surface, the Cloudflare access-rules API, the webhook receiver contract and the shared retry envelope.",
+          "path": "vendor-notes.md",
+          "url": "/Mirage/vendor-notes.html"
+        },
+        {
+          "title": "Production Design",
+          "description": "The full design document Mirage is built from: architecture, modes, data flow, failure philosophy.",
+          "path": "design/MIRAGE-DESIGN.md",
+          "url": "/Mirage/design/MIRAGE-DESIGN.html"
+        },
+        {
+          "title": "ADR-0001: No Public Decoy Marker",
+          "description": "Decoys and denials must not fingerprint Mirage — the reasoning and the consequences.",
+          "path": "adr/0001-no-public-decoy-marker.md",
+          "url": "/Mirage/adr/0001-no-public-decoy-marker.html"
+        }
+      ]
+    },
+    {
+      "id": "agent",
+      "title": "For Agents",
+      "pages": [
+        {
+          "title": "Reading Mirage as an Agent",
+          "description": "The machine-readable Mirage surface for AI agents and integrators: llms.txt, docs.json, the normative specs, golden vectors and the JSON CLI outputs.",
+          "path": "agent/index.md",
+          "url": "/Mirage/agent/"
+        },
+        {
+          "title": "llms.txt",
+          "description": "Curated machine index of this documentation.",
+          "path": "llms.md",
+          "url": "/Mirage/llms.txt"
+        },
+        {
+          "title": "docs.json",
+          "description": "Structured manifest of every page.",
+          "path": "docs.md",
+          "url": "/Mirage/docs.json"
+        }
+      ]
+    }
+  ]
+}

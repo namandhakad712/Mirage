@@ -1,0 +1,96 @@
+---
+# Documentation page: sidebar navigation, content column, right-hand
+# table of contents (built by assets/js/site.js from the rendered
+# headings). The sidebar marks the current page active and keeps its
+# section open via Liquid comparison against page.url.
+layout: default
+---
+<div class="doc-shell">
+  <aside class="sidebar" id="sidebar" aria-label="Site navigation">
+    <nav class="sidebar-nav">
+      {% for section in site.data.nav.sections %}
+      <section class="sidebar-section" data-section="{{ section.id }}">
+        <h3 class="sidebar-heading">{{ section.title }}</h3>
+        <ul>
+          {% for item in section.items %}
+          <li>
+            {% if page.url == item.url %}
+            <a class="sidebar-link active" href="{{ site.baseurl }}{{ item.url }}" aria-current="page">{{ item.title }}</a>
+            {% else %}
+            <a class="sidebar-link" href="{{ site.baseurl }}{{ item.url }}">{{ item.title }}</a>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% endfor %}
+    </nav>
+  </aside>
+
+  <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
+
+  <main id="main" class="doc-main">
+    <div class="doc-header">
+      <p class="doc-kicker">{{ page.category }}</p>
+      <h1 class="doc-title">{{ page.title }}</h1>
+      <p class="doc-description">{{ page.description }}</p>
+      {% if page.source %}
+      <p class="doc-source">Synced from <code>{{ page.source }}</code> — regenerate with <code>tools/sync_site_docs.py</code>.</p>
+      {% endif %}
+    </div>
+    <article class="doc-content" id="doc-content">
+      {{ content }}
+    </article>
+    <nav class="doc-pager" aria-label="Pager">
+      {% comment %} Previous/next within the flattened nav order. page.url
+      equals the nav item url for both directory hubs (/guide/) and plain
+      pages (/guide/signals.html), so a direct comparison is enough.
+      Liquid follows Ruby truthiness: an assigned 0 is truthy, only nil
+      and false are falsy. {% endcomment %}
+      {% assign flat = '' | split: '' %}
+      {% for section in site.data.nav.sections %}
+        {% for item in section.items %}
+          {% assign flat = flat | push: item %}
+        {% endfor %}
+      {% endfor %}
+      {% assign idx = nil %}
+      {% for item in flat %}
+        {% if item.url == page.url %}
+          {% assign idx = forloop.index0 %}
+        {% endif %}
+      {% endfor %}
+      {% assign prev = nil %}
+      {% assign next = nil %}
+      {% if idx != nil and idx > 0 %}
+        {% assign prev_idx = idx | minus: 1 %}
+        {% assign prev = flat[prev_idx] %}
+      {% endif %}
+      {% if idx != nil %}
+        {% assign next_idx = idx | plus: 1 %}
+        {% assign next = flat[next_idx] %}
+      {% endif %}
+      {% if prev %}
+      <a class="pager-card pager-prev" href="{{ site.baseurl }}{{ prev.url }}">
+        <span class="pager-direction">Previous</span>
+        <span class="pager-title">{{ prev.title }}</span>
+      </a>
+      {% else %}
+      <span class="pager-card pager-spacer"></span>
+      {% endif %}
+      {% if next %}
+      <a class="pager-card pager-next" href="{{ site.baseurl }}{{ next.url }}">
+        <span class="pager-direction">Next</span>
+        <span class="pager-title">{{ next.title }}</span>
+      </a>
+      {% else %}
+      <span class="pager-card pager-spacer"></span>
+      {% endif %}
+    </nav>
+  </main>
+
+  <aside class="toc" id="toc" aria-label="On this page">
+    <h3 class="toc-heading">On this page</h3>
+    <ul class="toc-list" id="toc-list"></ul>
+    <a class="toc-top" href="#main">Back to top</a>
+  </aside>
+</div>

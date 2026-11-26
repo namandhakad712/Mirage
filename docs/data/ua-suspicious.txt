@@ -1,0 +1,29 @@
+# Suspicious user-agent substrings — case-insensitive substring match.
+# Weight 15, class medium (SIG-106): tags and throttles, never bans alone.
+sqlmap/
+nikto
+nuclei
+masscan
+zgrab
+nmap scripting engine
+python-requests/
+python-urllib/
+go-http-client/
+wget/
+libwww-perl
+acunetix
+dirbuster
+dirb
+gobuster
+ffuf/
+httpx/
+wpscan
+arachni
+wfuzz/
+havij
+hydra
+metasploit
+burpsuite
+sqlninja
+zap
+w3af

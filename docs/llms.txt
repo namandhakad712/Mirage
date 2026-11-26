@@ -1,0 +1,63 @@
+# Mirage
+
+> Mirage is an open-source deception layer: every request is scored by deterministic signals, attackers are routed into decoy personas, and the whole system fails open by design.
+
+Repository: https://github.com/namandhakad712/Mirage · License: AGPL-3.0 · Signal spec v1.1.0 · Adapter protocol v1.
+
+## Guide
+
+- [Guide](https://namandhakad712.github.io/Mirage/guide/): The Mirage guide: what it is, how to run it, and the order to read the ten pages that cover detection, decoys, modes and operations.
+- [Getting Started](https://namandhakad712.github.io/Mirage/guide/getting-started.html): From a fresh clone to a running look-mode Mirage instance: build, gates, minimal config, serve, and reading your first events.
+- [Architecture](https://namandhakad712.github.io/Mirage/guide/architecture.html): The Mirage decision path end-to-end: adapter request to engine scoring, verdict ladder, actions, events, store and connectors.
+- [Signals](https://namandhakad712.github.io/Mirage/guide/signals.html): The 11 detection signals of SIGNALS v1.1.0: what each one sees, its fixed weight and class, a concrete example, and its gating rules.
+- [Verdicts](https://namandhakad712.github.io/Mirage/guide/verdicts.html): The Mirage verdict ladder with exact thresholds, the request-vs-cumulative score arithmetic, the protected-route cap and worked numeric examples.
+- [Decoys](https://namandhakad712.github.io/Mirage/guide/decoys.html): The Mirage decoy catalog: personas, entries, leads and honeytokens, how serving works, render determinism, and writing your own entry.
+- [Modes](https://namandhakad712.github.io/Mirage/guide/modes.html): The three Mirage modes — look, tripwires, protect — as an operational ladder, with the kill switch, the enforcement opt-in and what each mode does.
+- [Tooling](https://namandhakad712.github.io/Mirage/guide/tooling.html): Every quality gate and lab in the Mirage repo: the Makefile targets, the golden-vector generator, the fault-injection matrix and the docs-site gates.
+- [Operations](https://namandhakad712.github.io/Mirage/guide/operations.html): The Mirage production runbook: choosing a store, budget tuning, connector selection, dashboard usage, ban renewal and fail-open behavior.
+- [Testing](https://namandhakad712.github.io/Mirage/guide/testing.html): How Mirage is tested: golden vectors, the race suite, the pollution suite, the fault matrix, worker parity, and how to add a new vector.
+- [FAQ](https://namandhakad712.github.io/Mirage/guide/faq.html): Twelve honest answers about Mirage: why no ML, WAF replacement, CGNAT handling, false positives, licensing, performance and limits.
+
+## Reference
+
+- [Reference](https://namandhakad712.github.io/Mirage/reference/): The Mirage reference shelf: every configuration key, every CLI subcommand, the shared data files, and the normative specs.
+- [Configuration Reference](https://namandhakad712.github.io/Mirage/reference/config.html): Every key of the Mirage site config with its type, default, validation bound, what it controls, and the invariant behind it.
+- [CLI Reference](https://namandhakad712.github.io/Mirage/reference/cli.html): The mirage CLI: serve, doctor, init, posture, replay and version, with flags, exit codes and the --json output shapes.
+
+## Specifications
+
+- [Signal Specification](https://namandhakad712.github.io/Mirage/spec/SIGNALS.html): SIGNALS v1.1.0 — the eleven signals, fixed weights and classes, gating rules, evaluation order and the verdict ladder.
+- [Adapter Protocol](https://namandhakad712.github.io/Mirage/spec/ADAPTER-PROTOCOL.html): The v1 contract between an edge adapter and Mirage Core: the request, the decision, the action set and the event.
+- [Decoy Catalog](https://namandhakad712.github.io/Mirage/spec/DECOY-CATALOG.html): The v1 decoy catalog format: personas, entries, leads, tokens, reserved values and validation rules.
+- [Golden Vectors — Hand Computed](https://namandhakad712.github.io/Mirage/spec/golden-vectors/HAND-COMPUTED.html): The arithmetic behind all 20 golden vector cases, computed by hand and cross-checked by tools/gen_vectors.py.
+
+## Deployment
+
+- [Quickstart](https://namandhakad712.github.io/Mirage/deploy/quickstart.html): The shortest honest path to a running Mirage: build, check, configure, watch the first decisions.
+- [nginx Topology](https://namandhakad712.github.io/Mirage/deploy/nginx.html): Run Mirage as a transparent proxy behind nginx: X-Forwarded-For handling, trusted proxies, the deny map and the fail-open contract.
+- [Cloudflare Worker](https://namandhakad712.github.io/Mirage/deploy/cloudflare-worker.html): Build, configure and deploy the zero-dependency worker port, including secrets and shared-data regeneration.
+
+## Project
+
+- [About](https://namandhakad712.github.io/Mirage/about.html): What Mirage is, what runs today, and where the repository's honest status line stands — the README, unedited.
+- [Changelog](https://namandhakad712.github.io/Mirage/changelog.html): Every notable change to Mirage, round by round, following Keep a Changelog.
+- [Charter](https://namandhakad712.github.io/Mirage/charter.html): The mission, the non-goals, and the line Mirage refuses to cross.
+- [Invariants](https://namandhakad712.github.io/Mirage/invariants.html): I1-I15: the properties every line of Mirage must preserve, and the tests that hold them.
+- [Claims Policy](https://namandhakad712.github.io/Mirage/claims-policy.html): What we claim about Mirage, what we refuse to claim, and the evidence required before either.
+- [Known Limits](https://namandhakad712.github.io/Mirage/known-limits.html): Where Mirage does not help — the honest boundary list.
+- [Vendor Notes](https://namandhakad712.github.io/Mirage/vendor-notes.html): The pinned CrowdSec LAPI surface, the Cloudflare access-rules API, the webhook receiver contract and the shared retry envelope.
+- [Production Design](https://namandhakad712.github.io/Mirage/design/MIRAGE-DESIGN.html): The full design document Mirage is built from: architecture, modes, data flow, failure philosophy.
+- [ADR-0001: No Public Decoy Marker](https://namandhakad712.github.io/Mirage/adr/0001-no-public-decoy-marker.html): Decoys and denials must not fingerprint Mirage — the reasoning and the consequences.
+
+## For Agents
+
+- [Reading Mirage as an Agent](https://namandhakad712.github.io/Mirage/agent/): The machine-readable Mirage surface for AI agents and integrators: llms.txt, docs.json, the normative specs, golden vectors and the JSON CLI outputs.
+- [llms.txt](https://namandhakad712.github.io/Mirage/llms.txt): Curated machine index of this documentation.
+- [docs.json](https://namandhakad712.github.io/Mirage/docs.json): Structured manifest of every page.
+
+## Machine surface
+
+- [llms.txt](https://namandhakad712.github.io/Mirage/llms.txt): this index.
+- [llms-full.txt](https://namandhakad712.github.io/Mirage/llms-full.txt): every page above, flattened into one document.
+- [docs.json](https://namandhakad712.github.io/Mirage/docs.json): structured manifest (sections, titles, descriptions, paths).
+- [Golden vectors](https://github.com/namandhakad712/Mirage/blob/main/spec/golden-vectors/vectors.json): 20 hand-computed cases that lock the decision arithmetic — the executable contract.

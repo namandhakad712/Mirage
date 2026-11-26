@@ -1,0 +1,169 @@
+# Mirage decoy catalog v1 — six entries, three personas (DECOY-CATALOG.md).
+# Data, not code: parsed by the Go core and generated into the TS worker.
+# Safety: bodies are inert (no scripts, no redirects, no third-party links,
+# no live credentials); hosts come from reserved namespaces (I14); the
+# engine adds X-Robots-Tag: noindex, nofollow, noarchive to every response (I12).
+catalog_version: "1"
+
+personas:
+  - id: laravel-staging
+    story: "Laravel 10 on PHP 8.2 behind nginx, staging"
+    headers:
+      - "Server: nginx/1.24.0"
+      - "X-Powered-By: PHP/8.2.12"
+  - id: legacy-cpanel
+    story: "aged shared-hosting cPanel box"
+    headers:
+      - "Server: Apache/2.4.6 (cPanel)"
+      - "X-Powered-By: PHP/7.4.33"
+  - id: node-api-dev
+    story: "Node API left in dev mode"
+    headers:
+      - "X-Powered-By: Express"
+
+entries:
+  - id: env-file-staging
+    persona: laravel-staging
+    path: /.env
+    status: 200
+    content_type: text/plain
+    size_cap_bytes: 2048
+    body: |
+      APP_NAME=staging
+      APP_ENV=staging
+      APP_KEY=base64:{{SEED:44_B64}}
+      APP_DEBUG=true
+      APP_URL=https://staging.example.com
+
+      DB_CONNECTION=pgsql
+      DATABASE_URL=postgres://deploy:{{TOKEN:db_password}}@db.test:5432/staging
+      DB_USERNAME=deploy
+      DB_PASSWORD={{TOKEN:db_password}}
+
+      MAIL_MAILER=smtp
+      MAIL_HOST=mail.test
+      MAIL_PORT=1025
+
+      AWS_ACCESS_KEY_ID=AKIAMRG{{SEED:13_UPPER}}
+      AWS_BUCKET=staging-uploads
+    leads:
+      - /storage/logs/laravel-staging.log
+    honeytokens:
+      - id: db_password
+        format: token_alnum_24
+
+  - id: git-config-staging
+    persona: laravel-staging
+    path: /.git/config
+    status: 200
+    content_type: text/plain
+    size_cap_bytes: 1024
+    body: |
+      [core]
+          repositoryformatversion = 0
+          filemode = true
+          bare = false
+          logallrefupdates = true
+      [remote "origin"]
+          url = https://git.test/staging/app.git
+          fetch = +refs/heads/*:refs/remotes/origin/*
+      [branch "main"]
+          remote = origin
+          merge = refs/heads/main
+    leads:
+      - /.git/logs/refs/heads/main
+    honeytokens: []
+
+  - id: admin-panel-legacy
+    persona: legacy-cpanel
+    path: /admin/login
+    status: 200
+    content_type: text/html
+    size_cap_bytes: 4096
+    body: |
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <title>Admin Login</title>
+        <link rel="stylesheet" href="/admin/assets/style.css">
+      </head>
+      <body>
+        <h1>Admin Login</h1>
+        <form method="post" action="/admin/login/verify">
+          <label>Username <input type="text" name="username" autocomplete="off"></label>
+          <label>Password <input type="password" name="password"></label>
+          <button type="submit">Sign in</button>
+        </form>
+        <hr>
+        <p>Forgot password? Contact the site administrator.</p>
+      </body>
+      </html>
+    leads:
+      - /admin/login/verify
+      - /admin/assets/style.css
+    honeytokens: []
+
+  - id: debug-endpoint-legacy
+    persona: legacy-cpanel
+    path: /debug
+    status: 200
+    content_type: application/json
+    size_cap_bytes: 2048
+    body: |
+      {
+        "app": "legacy-shop",
+        "debug": true,
+        "php_version": "7.4.33",
+        "session_save_path": "/tmp",
+        "opcache_enabled": false,
+        "last_error": {
+          "file": "/home/legacyshop/public_html/includes/db.php",
+          "line": 142,
+          "message": "connection refused (db.legacy.test:5432)"
+        }
+      }
+    leads:
+      - /debug/phpinfo
+    honeytokens: []
+
+  - id: api-docs-dev
+    persona: node-api-dev
+    path: /api/docs
+    status: 200
+    content_type: application/json
+    size_cap_bytes: 2048
+    body: |
+      {
+        "openapi": "3.0.0",
+        "info": { "title": "internal-api", "version": "0.9.3-dev" },
+        "paths": {
+          "/v1/ping": { "get": { "summary": "health probe" } },
+          "/v1/orders": { "get": { "summary": "list orders" } },
+          "/v1/admin/tokens": { "post": { "summary": "issue API token" } }
+        }
+      }
+    leads:
+      - /v1/admin/tokens
+    honeytokens: []
+
+  - id: source-map-dev
+    persona: node-api-dev
+    path: /app.js.map
+    status: 200
+    content_type: application/json
+    size_cap_bytes: 2048
+    body: |
+      {
+        "version": 3,
+        "file": "app.js",
+        "sources": [
+          "webpack:///src/index.js",
+          "webpack:///src/admin.js",
+          "webpack:///src/secrets.js"
+        ],
+        "sourcesContent": [null, null, null]
+      }
+    leads:
+      - /sources/secrets.js
+    honeytokens: []

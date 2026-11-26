@@ -1,5 +1,10 @@
-# Vendor notes — exactly what Mirage calls, and what it expects back
-
+---
+layout: doc
+title: "Vendor Notes"
+description: "The pinned CrowdSec LAPI surface, the Cloudflare access-rules API, the webhook receiver contract and the shared retry envelope."
+category: project
+order: 7
+---
 Provider APIs are pinned (design §5): each connector documents the surface
 it talks to, so an operator can audit the traffic Mirage generates. Every
 connector implements one interface (`internal/connectors/connector.go`):
@@ -187,13 +192,13 @@ The fourth connector (`denyfile`) has no vendor: it maintains an
 nginx/Apache-compatible deny map at `connectors.denyfile.path` — one line
 per address, sorted, atomically rewritten, with the expiry carried in a
 comment and Reconcile owning expiry. See
-[deploy/nginx.md](deploy/nginx.md) for the include and reload wiring.
+[deploy/nginx.md]({{ site.baseurl }}/deploy/nginx.html) for the include and reload wiring.
 
 ## See also
 
-- [deploy/nginx.md](deploy/nginx.md) — the transparent-proxy topology and
+- [deploy/nginx.md]({{ site.baseurl }}/deploy/nginx.html) — the transparent-proxy topology and
   the deny map.
-- [deploy/quickstart.md](deploy/quickstart.md) — modes and the token
+- [deploy/quickstart.md]({{ site.baseurl }}/deploy/quickstart.html) — modes and the token
   rules.
 - `internal/connectors/*.go` — the authoritative source for everything on
   this page; these notes mirror the code.

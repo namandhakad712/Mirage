@@ -1,0 +1,35 @@
+# Mirage documentation site.
+#
+# Source: docs/ (the same directory that holds the repository's markdown).
+# Built by .github/workflows/pages.yml with github/jekyll-build-pages —
+# the same Jekyll (3.10.x) and plugin set GitHub Pages runs natively, so a
+# green local/CI build is a green deploy. No plugins, no remote themes:
+# every layout, include and style lives in this repository.
+
+title: Mirage
+tagline: Deception-layer defense against AI-driven attack agents
+description: >-
+  Mirage is an open-source deception layer: every request is scored by
+  deterministic signals, attackers are routed into decoy personas, and the
+  whole system fails open by design.
+
+url: "https://namandhakad712.github.io"
+baseurl: "/Mirage"
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    css_class: "highlight"
+    span:
+      line_numbers: false
+    block:
+      line_numbers: false
+
+# No theme, no plugins: _layouts/ + _includes/ + assets/ are the design
+# system. tools/check_site.py validates that every page, layout reference,
+# navigation entry and machine manifest (llms.txt, docs.json) stays
+# consistent; tools/sync_site_docs.py keeps the spec/ and data/ mirrors
+# under docs/ fresh from their normative sources.

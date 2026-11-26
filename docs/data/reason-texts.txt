@@ -1,0 +1,20 @@
+# Plain-English reason texts (I10). Dashboards, reports and event cards
+# render these; attacker-controlled values interpolate ONLY through the
+# {path} placeholder after escaping (I7). Tone: calm, honest, no fear.
+SIG-000=Mirage stepped aside so your site could answer normally. Nothing was blocked and nothing was scored.
+SIG-101=Someone asked for {path}, a file where apps keep secrets. Nothing real was exposed: Mirage served a fake.
+SIG-102=Someone asked for {path}, a door that exists only as a decoy. Real visitors never see it.
+SIG-103=Someone followed a link that exists only inside a decoy Mirage served them earlier. That is close to certain evidence of an automated scout.
+SIG-104=A fake credential that Mirage planted in a decoy was just used. This is near-certain evidence, and it tells us exactly which decoy leaked it.
+SIG-105=Someone requested many different unknown addresses in a short time, the pattern of an automated scanner mapping the site.
+SIG-106=The visitor's software signature ({path} was the user agent) is a known attack tool.
+SIG-107=The visitor changed its apparent software many times in a few minutes, together with other suspicious behavior.
+SIG-108=Many requests in a row with no cookie jar at all, unlike any normal browser.
+SIG-109=The requests are unusually bare, with far fewer headers than any real browser sends.
+SIG-110=The requests carry no user agent at all, which no ordinary browser does.
+SIG-111=The requests come from a command-line tool, combined with other suspicious behavior on the same request.
+VRD-OBSERVE=Nothing worth acting on.
+VRD-TAG=Marked as slightly suspicious and kept in the log. Nothing was blocked.
+VRD-DECOY-ROUTE=Shown a decoy instead of the real site. Nothing real was exposed.
+VRD-THROTTLE=Slowed down. The site stayed reachable for everyone else.
+VRD-BAN=Blocked for a short time, with a reason recorded and a one-click undo.

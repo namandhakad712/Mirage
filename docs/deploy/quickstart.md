@@ -1,5 +1,10 @@
-# Quickstart — from zero to Mirage
-
+---
+layout: doc
+title: "Quickstart"
+description: "The shortest honest path to a running Mirage: build, check, configure, watch the first decisions."
+category: deploy
+order: 1
+---
 This page is the honest path from a fresh clone to a working Mirage
 installation. Read the status note first: one part of Mirage is deployable
 today, one part is still in development, and this page does not pretend
@@ -14,7 +19,7 @@ development, landing with the server release:** the `mirage` server binary
 (`cmd/mirage`) and the Go edge middleware. Until then there is no `mirage
 serve` command to document — any command you see for a Mirage CLI anywhere
 else is not this project. What you can run today on real traffic is the
-[Cloudflare Worker](cloudflare-worker.md); the Go core is a library whose
+[Cloudflare Worker]({{ site.baseurl }}/deploy/cloudflare-worker.html); the Go core is a library whose
 every package is verified by `make check`.
 
 ## What you need
@@ -95,7 +100,7 @@ npx wrangler deploy  # with your wrangler.toml in place — see the full guide
 
 The full walkthrough (wrangler.toml, routes, the reserved
 `MIRAGE_TOKENS` binding, how the shared catalog data is regenerated,
-fail-open semantics) is in [cloudflare-worker.md](cloudflare-worker.md).
+fail-open semantics) is in [cloudflare-worker.md]({{ site.baseurl }}/deploy/cloudflare-worker.html).
 
 ## 5. Run it (self-hosted: when the server lands)
 
@@ -104,14 +109,14 @@ the dashboard on `listen`, scores requests and drives the connectors — is
 in development and lands with the server release. Your `mirage.yaml` is
 already the complete config surface it will read, so nothing you did above
 is throwaway. When the binary ships, this section becomes the `serve`
-instructions; watch [CHANGELOG.md](../../CHANGELOG.md) for the release.
+instructions; watch [CHANGELOG.md](https://github.com/namandhakad712/Mirage/blob/main/CHANGELOG.md) for the release.
 
 What you can already do today around the future server:
 
-- Prepare the reverse-proxy side: [nginx.md](nginx.md) documents the
+- Prepare the reverse-proxy side: [nginx.md]({{ site.baseurl }}/deploy/nginx.html) documents the
   transparent-proxy topology (TLS termination, `X-Forwarded-For`,
   `trusted_proxies`) and the deny-map include.
-- Prepare connectors: [vendor-notes.md](../vendor-notes.md) documents exactly
+- Prepare connectors: [vendor-notes.md]({{ site.baseurl }}/vendor-notes.html) documents exactly
   what Mirage calls on CrowdSec, Cloudflare and webhook receivers, with
   the retry envelope and the `X-Mirage-Signature` verification recipe.
 - Deploy the worker at the edge and add the self-hosted core later — the
@@ -124,7 +129,7 @@ Mode upgrades are a one-line config change; downgrades are deleting that
 line. From `look`, move to `tripwires` when you want scouts to be answered
 with inert decoys (never to verified bots or ordinary visitors — I12). Move
 to `protect` only after reviewing the enforcement limits in
-[known-limits.md](../known-limits.md): bans are single-address, short and
+[known-limits.md]({{ site.baseurl }}/known-limits.html): bans are single-address, short and
 budget-capped (I5, I15), Tor and VPN exits are tagged rather than banned,
 and when a budget is exceeded Mirage drops to observe rather than
 over-ban. `enforcement.kill_switch: true` stops all enforcement instantly
@@ -132,10 +137,10 @@ from anywhere on the ladder.
 
 ## Where to go next
 
-- [nginx.md](nginx.md) — transparent-proxy integration, the deny map.
-- [cloudflare-worker.md](cloudflare-worker.md) — the edge deployment that
+- [nginx.md]({{ site.baseurl }}/deploy/nginx.html) — transparent-proxy integration, the deny map.
+- [cloudflare-worker.md]({{ site.baseurl }}/deploy/cloudflare-worker.html) — the edge deployment that
   runs today.
-- [vendor-notes.md](../vendor-notes.md) — CrowdSec, Cloudflare and the webhook
+- [vendor-notes.md]({{ site.baseurl }}/vendor-notes.html) — CrowdSec, Cloudflare and the webhook
   receiver contract.
-- [SECURITY.md](../../SECURITY.md) — how to report a vulnerability and what
+- [SECURITY.md](https://github.com/namandhakad712/Mirage/blob/main/SECURITY.md) — how to report a vulnerability and what
   `mrg_` honeytokens are.

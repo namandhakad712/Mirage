@@ -1,0 +1,43 @@
+<header class="site-header">
+  <div class="site-header-inner">
+    <a class="brand" href="{{ site.baseurl }}/">
+      <svg class="brand-mark" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+        <path d="M12 2.5 21 12l-9 9.5L3 12z" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M7.6 12 12 7.5l4.4 4.5-4.4 4.6z" fill="currentColor" opacity="0.55"/>
+        <path d="M9.8 12 12 9.7l2.2 2.3-2.2 2.3z" fill="currentColor"/>
+      </svg>
+      <span class="brand-name">Mirage</span>
+    </a>
+
+    <nav class="site-nav" id="site-nav" aria-label="Primary">
+      <a class="site-nav-link" href="{{ site.baseurl }}/guide/">Guide</a>
+      <a class="site-nav-link" href="{{ site.baseurl }}/reference/">Reference</a>
+      <a class="site-nav-link" href="{{ site.baseurl }}/spec/SIGNALS.html">Specs</a>
+      <a class="site-nav-link" href="{{ site.baseurl }}/deploy/quickstart.html">Deploy</a>
+      <a class="site-nav-link" href="{{ site.baseurl }}/agent/">For Agents</a>
+      <a class="site-nav-link" href="{{ site.baseurl }}/changelog.html">Changelog</a>
+    </nav>
+
+    <div class="site-actions">
+      <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle light and dark theme" title="Toggle theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.7"/>
+          <path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" focusable="false">
+          <path d="M20.4 14.2A8.6 8.6 0 0 1 9.8 3.6a8.6 8.6 0 1 0 10.6 10.6z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <a class="icon-btn" href="https://github.com/namandhakad712/Mirage" aria-label="Mirage on GitHub" title="GitHub repository">
+        <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" focusable="false">
+          <path d="M12 2.2a9.8 9.8 0 0 0-3.1 19.1c.5.1.7-.2.7-.5v-1.8c-2.7.6-3.3-1.2-3.3-1.2-.4-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.2-.2-4.4-1.1-4.4-4.8 0-1 .4-1.9 1-2.6-.1-.2-.4-1.2.1-2.6 0 0 .8-.3 2.7 1a9.3 9.3 0 0 1 4.9 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.6.6.7 1 1.6 1 2.6 0 3.7-2.3 4.6-4.5 4.8.3.3.7.9.7 1.8v2.7c0 .3.2.6.7.5A9.8 9.8 0 0 0 12 2.2z" fill="currentColor"/>
+        </svg>
+      </a>
+      <button class="icon-btn nav-toggle" id="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+        <svg class="icon-open" viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" focusable="false">
+          <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>

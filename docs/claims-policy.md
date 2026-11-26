@@ -1,5 +1,10 @@
-# Mirage Claims Policy
-
+---
+layout: doc
+title: "Claims Policy"
+description: "What we claim about Mirage, what we refuse to claim, and the evidence required before either."
+category: project
+order: 5
+---
 Security software earns trust by understating, not overclaiming. This policy
 is enforced by review on every change to README, docs and the dashboard copy.
 
