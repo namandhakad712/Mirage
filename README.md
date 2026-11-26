@@ -1,11 +1,17 @@
 # Mirage
 
+[![ci](https://github.com/namandhakad712/Mirage/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/namandhakad712/Mirage/actions/workflows/ci.yml)
+
 Open-source tripwires and decoys that show you who is scanning your website and
 waste their time — set up in ten minutes, no security background needed.
 
 Mirage detects automated reconnaissance (scanner noise, AI attack agents,
 opportunistic crawlers) and answers it with inert decoys. It never breaks the
 site it protects, and it never pollutes the public web.
+
+**Start here: [docs/deploy/quickstart.md](docs/deploy/quickstart.md)** — from
+zero to a verified build, a config with a generated dashboard token, and the
+Cloudflare Worker deployment that runs today.
 
 ## What it is
 
@@ -30,6 +36,57 @@ change; moving down is deleting one line.
   [Charter](docs/charter.md).
 - Not a hosted service. Self-hosted, no phone-home, telemetry off by default.
 
+## Architecture
+
+Two implementations, one spec: the Go core and the TypeScript worker must
+produce identical verdicts on the shared golden vectors. CI fails on any
+divergence.
+
+| Package | One line |
+| --- | --- |
+| `internal/model` | Shared decision types, session key `sha256(ip)[:32]`, the right-to-left trusted-proxy client-IP walk (I6), never-scored/never-banned ranges, reason-text sanitizer (I7). |
+| `internal/config` | Strict YAML site config: fail-closed unknown-key rejection, every policy bound, the loopback dashboard-token requirement (I9, I11). |
+| `internal/store` | SQLite (WAL) and in-memory stores behind one interface; versioned schema with safe migration. |
+| `internal/events` | Bounded drop-oldest event queue; emission never blocks the hot path (I3). |
+| `internal/detect` | The SIGNALS v1.1.0 decision engine: deterministic scoring, verdict ladder, gating rules; the golden-vector parity target. |
+| `internal/decoy` | The decoy data layer: strict catalog loader, reserved-value validation, deterministic renderer, pollution suite (I8, I12–I14). |
+| `internal/enforce` | The verdict gatekeeper: per-verdict budgets and the global kill switch (I5, I9). |
+| `internal/connectors` | Denyfile, webhook, CrowdSec LAPI and Cloudflare adapters behind one retry envelope (backoff + jitter, 429 Retry-After honored). |
+| `packages/mirage-worker` | The Cloudflare Worker: TypeScript port of the engine, zero runtime dependencies, in-process and fail-open (Apache-2.0). |
+
+Decisions are made on an in-memory snapshot under a hard deadline — no
+network call, disk wait or LLM call in the request path (I3) — and any
+internal failure sends the request to the origin unmodified (I1).
+
+## The connectors
+
+Enforcement is opt-in (I9) and delivered by four connectors, each fail-open
+by design and fully documented in
+[vendor notes](docs/vendor-notes.md) with the exact API surfaces they call:
+
+| Connector | What it does | Config keys |
+| --- | --- | --- |
+| `denyfile` | Maintains an nginx/Apache-compatible deny map with atomic rewrites. | `connectors.denyfile.path` |
+| `webhook` | POSTs ban/unban notices signed with `X-Mirage-Signature` (hex HMAC-SHA256). | `connectors.webhook.url`, `connectors.webhook.secret_env` |
+| `crowdsec` | Pushes bans to a local CrowdSec LAPI (alerts + decisions, origin `mirage`). | `connectors.crowdsec.lapi_url`, `connectors.crowdsec.api_key_env` |
+| `cloudflare` | Pushes bans as zone IP access rules, `mirage: `-prefixed for ownership. | `connectors.cloudflare.account_id`, `.zone_id`, `.api_token_env` |
+
+No connector credential lives in the config file — only the names of the
+environment variables that hold them (I11). The complete annotated surface,
+including the mode table and the token rules, is
+[mirage.example.yaml](mirage.example.yaml).
+
+## The Cloudflare Worker
+
+[`packages/mirage-worker`](packages/mirage-worker) is the deployable piece
+today: the same detection engine, decoy catalog and golden-vector parity as
+the Go core, bundled into a zero-runtime-dependency worker that fails open
+by construction. Deploy it with
+[docs/deploy/cloudflare-worker.md](docs/deploy/cloudflare-worker.md);
+self-hosted users will proxy through the core instead — see
+[docs/deploy/nginx.md](docs/deploy/nginx.md) for the transparent-proxy
+topology.
+
 ## The constitution
 
 Every line of Mirage is checked against fifteen invariants:
@@ -48,21 +105,49 @@ every action is explainable, and no internet pollution (I12–I15).
 ## Repository layout
 
 ```
-docs/            invariants, charter, claims policy, known limits, design
-spec/            normative specs: signals, adapter protocol, decoy catalog,
-                 golden vectors shared by all implementations
-data/            shared data files (scanner paths, UA patterns, token formats,
-                 reserved hosts, reason texts) used by Go and TypeScript alike
-internal/        Go core (detection, deception, enforcement, store, service)
-cmd/mirage/      CLI: init, doctor, serve, replay, posture
-packages/        mirage-worker — TypeScript Cloudflare Worker (Apache-2.0)
-lab/             fault-injection and adversarial test lab
-tools/           vector generator and other deterministic tooling
+Makefile             build and quality gates (make check runs every CI gate)
+mirage.example.yaml  the complete annotated config surface
+docs/                invariants, charter, claims policy, known limits, ADRs,
+                     design, deploy guides (quickstart, nginx, worker)
+spec/                normative specs: signals, adapter protocol, decoy catalog,
+                     golden vectors shared by all implementations
+data/                shared data files (scanner paths, UA patterns, token formats,
+                     reserved hosts, reason texts) used by Go and TypeScript alike
+internal/            Go core: model, config, store, events, detect, decoy,
+                     enforce, connectors
+cmd/mirage/          CLI: init, doctor, serve, replay, posture (in development,
+                     lands with the server release)
+packages/            mirage-worker — TypeScript Cloudflare Worker (Apache-2.0)
+lab/                 fault-injection and adversarial test lab (in development)
+tools/               vector generator and other deterministic tooling
 ```
 
 Two implementations, one spec: the Go core and the TypeScript worker must
 produce identical verdicts on the shared golden vectors. CI fails on any
 divergence.
+
+## Status
+
+Foundation stage — staged, gated rounds, no releases yet (the changelog
+tracks only `[Unreleased]`). What exists now:
+
+- The constitution: fifteen invariants, charter, claims policy, known
+  limits, ADRs.
+- The normative specs (SIGNALS v1.1.0, adapter protocol v1, decoy catalog
+  v1), the shared data files, and the golden vectors — 20 cases / 68
+  requests, hand-computed and machine cross-checked — plus the
+  cross-engine render fixture.
+- The Go core: model, config, store, events, enforce and connectors,
+  race-tested.
+- The decision engine (SIGNALS v1.1.0 in code) and the decoy data layer.
+- The Cloudflare Worker — deployable today.
+- The build layer: Makefile gates, CI, and the full example config.
+
+In development: the `mirage` server binary (`cmd/mirage`) and the Go edge
+middleware — they land with the server release; until then the Go core is a
+library and the worker is the runnable edge. Version 1.0 is defined by exit
+criteria, not a date — see [docs/design/MIRAGE-DESIGN.md](docs/design/MIRAGE-DESIGN.md)
+section 12. Watch [CHANGELOG.md](CHANGELOG.md) for progress.
 
 ## License
 
@@ -70,15 +155,17 @@ divergence.
 - Adapters, SDKs and the Cloudflare Worker: **Apache-2.0** — see
   [packages/mirage-worker/LICENSE](packages/mirage-worker/LICENSE).
 
-## Status
+## Security
 
-Foundation stage. The constitution, specs and shared data are in; code lands
-in staged, gated rounds. Watch [CHANGELOG.md](CHANGELOG.md) for progress.
-Version 1.0 is defined by exit criteria, not a date — see
-[docs/design/MIRAGE-DESIGN.md](docs/design/MIRAGE-DESIGN.md) section 12.
+Found something? Report it privately via GitHub's vulnerability reporting
+on this repository — see [SECURITY.md](SECURITY.md) for scope, the `mrg_`
+honeytoken namespace and what is security-sensitive here. Supported: `main`
+only.
 
 ## Contributing
 
 Read [docs/charter.md](docs/charter.md) first: contributions that add
 hack-back, web poisoning or overclaiming will be declined. Decoy packs (YAML,
-no code) and platform recipes are the lowest-barrier ways to help.
+no code) and platform recipes are the lowest-barrier ways to help. The dev
+setup, the spec-first rule and the quality gates are in
+[CONTRIBUTING.md](CONTRIBUTING.md).

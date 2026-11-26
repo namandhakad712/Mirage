@@ -1,0 +1,71 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      # tools/gen_vectors.py imports yaml; PyYAML is not preinstalled on
+      # GitHub runners and the image's system Python is externally managed.
+      - name: Install PyYAML for the vector generator
+        run: python3 -m pip install --user --break-system-packages pyyaml
+
+      - name: gofmt check
+        run: make fmt-check
+
+      - name: go vet
+        run: make vet
+
+      - name: build
+        run: make build
+
+      - name: race tests
+        run: make test
+
+      - name: golden vector cross-check
+        run: make vectors
+
+      - name: slop gate
+        run: make slop
+
+  worker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: packages/mirage-worker/package-lock.json
+
+      - name: Install worker dependencies
+        run: cd packages/mirage-worker && npm ci
+
+      - name: Build the worker
+        run: cd packages/mirage-worker && npm run build
+
+      - name: Test the worker
+        run: cd packages/mirage-worker && npm test
