@@ -1,0 +1,1267 @@
+{
+ "spec_version": "1.1.0",
+ "protocol_version": "1",
+ "policy": {
+  "protected_routes": [
+   "/wp-login.php",
+   "/wp-admin/",
+   "/checkout",
+   "/cart",
+   "/api/"
+  ],
+  "session_ttl_ms": 1800000,
+  "ua_window_ms": 300000,
+  "enum_window_ms": 60000,
+  "enum_threshold": 8,
+  "ua_rotation_threshold": 4,
+  "ban_ttl_ms": 1800000
+ },
+ "cases": [
+  {
+   "id": "v01-clean-browsing",
+   "client_ip": "203.0.113.20",
+   "allowlisted_ips": [],
+   "requests": [
+    {
+     "method": "GET",
+     "path": "/",
+     "ts_ms": 1780000000000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 9,
+     "has_cookie": true
+    },
+    {
+     "method": "GET",
+     "path": "/about",
+     "ts_ms": 1780000001000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 9,
+     "has_cookie": true
+    },
+    {
+     "method": "GET",
+     "path": "/pricing",
+     "ts_ms": 1780000002000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 9,
+     "has_cookie": true
+    },
+    {
+     "method": "GET",
+     "path": "/blog",
+     "ts_ms": 1780000003000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 9,
+     "has_cookie": true
+    },
+    {
+     "method": "GET",
+     "path": "/contact",
+     "ts_ms": 1780000004000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 9,
+     "has_cookie": true
+    }
+   ],
+   "expected": [
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    }
+   ]
+  },
+  {
+   "id": "v02-scanner-path",
+   "client_ip": "203.0.113.7",
+   "allowlisted_ips": [],
+   "requests": [
+    {
+     "method": "GET",
+     "path": "/.env",
+     "ts_ms": 1780000000000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 8,
+     "has_cookie": false
+    }
+   ],
+   "expected": [
+    {
+     "signals": [
+      "scanner_path"
+     ],
+     "verdict": "decoy_route",
+     "score": 25,
+     "reason_code": "SIG-101"
+    }
+   ]
+  },
+  {
+   "id": "v03-decoy-hit",
+   "client_ip": "203.0.113.8",
+   "allowlisted_ips": [],
+   "requests": [
+    {
+     "method": "GET",
+     "path": "/admin/login",
+     "ts_ms": 1780000000000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 8,
+     "has_cookie": false
+    }
+   ],
+   "expected": [
+    {
+     "signals": [
+      "decoy_hit"
+     ],
+     "verdict": "decoy_route",
+     "score": 30,
+     "reason_code": "SIG-102"
+    }
+   ]
+  },
+  {
+   "id": "v04-decoy-lead-follow",
+   "client_ip": "203.0.113.9",
+   "allowlisted_ips": [],
+   "requests": [
+    {
+     "method": "GET",
+     "path": "/.env",
+     "ts_ms": 1780000000000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 8,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/storage/logs/laravel-staging.log",
+     "ts_ms": 1780000001000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 8,
+     "has_cookie": false
+    }
+   ],
+   "expected": [
+    {
+     "signals": [
+      "scanner_path"
+     ],
+     "verdict": "decoy_route",
+     "score": 25,
+     "reason_code": "SIG-101"
+    },
+    {
+     "signals": [
+      "decoy_lead_follow"
+     ],
+     "verdict": "ban",
+     "score": 65,
+     "reason_code": "SIG-103"
+    }
+   ]
+  },
+  {
+   "id": "v05-honeytoken-protected",
+   "client_ip": "203.0.113.10",
+   "allowlisted_ips": [],
+   "requests": [
+    {
+     "method": "GET",
+     "path": "/.env",
+     "ts_ms": 1780000000000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 8,
+     "has_cookie": false
+    },
+    {
+     "method": "POST",
+     "path": "/api/v1/auth",
+     "ts_ms": 1780000001000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 8,
+     "has_cookie": false,
+     "auth_hint": "Bearer mrg_live_63e36e2d68663c27f6841a68"
+    }
+   ],
+   "expected": [
+    {
+     "signals": [
+      "scanner_path"
+     ],
+     "verdict": "decoy_route",
+     "score": 25,
+     "reason_code": "SIG-101"
+    },
+    {
+     "signals": [
+      "honeytoken_use"
+     ],
+     "verdict": "ban",
+     "score": 75,
+     "reason_code": "SIG-104"
+    }
+   ]
+  },
+  {
+   "id": "v06-structure-only",
+   "client_ip": "203.0.113.11",
+   "allowlisted_ips": [],
+   "requests": [
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000000000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 9,
+     "has_cookie": true
+    },
+    {
+     "method": "GET",
+     "path": "/nope1",
+     "ts_ms": 1780000001000,
+     "user_agent": "",
+     "header_count": 2,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/nope2",
+     "ts_ms": 1780000002000,
+     "user_agent": "",
+     "header_count": 2,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/nope3",
+     "ts_ms": 1780000003000,
+     "user_agent": "",
+     "header_count": 2,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/nope4",
+     "ts_ms": 1780000004000,
+     "user_agent": "",
+     "header_count": 2,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/nope5",
+     "ts_ms": 1780000005000,
+     "user_agent": "",
+     "header_count": 2,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/nope6",
+     "ts_ms": 1780000006000,
+     "user_agent": "",
+     "header_count": 2,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/nope7",
+     "ts_ms": 1780000007000,
+     "user_agent": "",
+     "header_count": 2,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/nope8",
+     "ts_ms": 1780000008000,
+     "user_agent": "",
+     "header_count": 2,
+     "has_cookie": false
+    }
+   ],
+   "expected": [
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [
+      "headers_sparse",
+      "ua_missing"
+     ],
+     "verdict": "tag",
+     "score": 20,
+     "reason_code": "SIG-109"
+    },
+    {
+     "signals": [
+      "headers_sparse",
+      "ua_missing"
+     ],
+     "verdict": "tag",
+     "score": 40,
+     "reason_code": "SIG-109"
+    },
+    {
+     "signals": [
+      "headers_sparse",
+      "ua_missing"
+     ],
+     "verdict": "tag",
+     "score": 60,
+     "reason_code": "SIG-109"
+    },
+    {
+     "signals": [
+      "headers_sparse",
+      "ua_missing"
+     ],
+     "verdict": "tag",
+     "score": 80,
+     "reason_code": "SIG-109"
+    },
+    {
+     "signals": [
+      "headers_sparse",
+      "ua_missing"
+     ],
+     "verdict": "tag",
+     "score": 100,
+     "reason_code": "SIG-109"
+    },
+    {
+     "signals": [
+      "headers_sparse",
+      "ua_missing"
+     ],
+     "verdict": "tag",
+     "score": 120,
+     "reason_code": "SIG-109"
+    },
+    {
+     "signals": [
+      "path_enumeration",
+      "headers_sparse",
+      "ua_missing"
+     ],
+     "verdict": "throttle",
+     "score": 165,
+     "reason_code": "SIG-105"
+    },
+    {
+     "signals": [
+      "path_enumeration",
+      "headers_sparse",
+      "ua_missing"
+     ],
+     "verdict": "throttle",
+     "score": 210,
+     "reason_code": "SIG-105"
+    }
+   ]
+  },
+  {
+   "id": "v07-verified-bot",
+   "client_ip": "203.0.113.12",
+   "allowlisted_ips": [],
+   "requests": [
+    {
+     "method": "GET",
+     "path": "/.env",
+     "ts_ms": 1780000000000,
+     "user_agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+     "header_count": 8,
+     "has_cookie": false
+    }
+   ],
+   "expected": [
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    }
+   ]
+  },
+  {
+   "id": "v08-allowlist-ip",
+   "client_ip": "192.0.2.50",
+   "allowlisted_ips": [
+    "192.0.2.50/32"
+   ],
+   "requests": [
+    {
+     "method": "GET",
+     "path": "/admin/login",
+     "ts_ms": 1780000000000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 8,
+     "has_cookie": false
+    }
+   ],
+   "expected": [
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    }
+   ]
+  },
+  {
+   "id": "v09-protected-route",
+   "client_ip": "203.0.113.13",
+   "allowlisted_ips": [],
+   "requests": [
+    {
+     "method": "GET",
+     "path": "/wp-login.php",
+     "ts_ms": 1780000000000,
+     "user_agent": "sqlmap/1.8.2#stable (http://sqlmap.org)",
+     "header_count": 4,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/.env",
+     "ts_ms": 1780000001000,
+     "user_agent": "sqlmap/1.8.2#stable (http://sqlmap.org)",
+     "header_count": 4,
+     "has_cookie": false
+    }
+   ],
+   "expected": [
+    {
+     "signals": [
+      "ua_suspicious"
+     ],
+     "verdict": "tag",
+     "score": 15,
+     "reason_code": "SIG-106"
+    },
+    {
+     "signals": [
+      "scanner_path",
+      "ua_suspicious"
+     ],
+     "verdict": "throttle",
+     "score": 55,
+     "reason_code": "SIG-101"
+    }
+   ]
+  },
+  {
+   "id": "v10-curl-gating",
+   "client_ip": "203.0.113.14",
+   "allowlisted_ips": [],
+   "requests": [
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000000000,
+     "user_agent": "curl/8.5.0",
+     "header_count": 3,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/.env",
+     "ts_ms": 1780000001000,
+     "user_agent": "curl/8.5.0",
+     "header_count": 3,
+     "has_cookie": false
+    }
+   ],
+   "expected": [
+    {
+     "signals": [
+      "headers_sparse"
+     ],
+     "verdict": "observe",
+     "score": 10,
+     "reason_code": "SIG-109"
+    },
+    {
+     "signals": [
+      "scanner_path",
+      "headers_sparse",
+      "tooling_curl"
+     ],
+     "verdict": "throttle",
+     "score": 60,
+     "reason_code": "SIG-101"
+    }
+   ]
+  },
+  {
+   "id": "v11-ua-rotation-gated",
+   "client_ip": "203.0.113.15",
+   "allowlisted_ips": [],
+   "requests": [
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000000000,
+     "user_agent": "UA-A/1.0",
+     "header_count": 7,
+     "has_cookie": true
+    },
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000001000,
+     "user_agent": "UA-B/1.0",
+     "header_count": 7,
+     "has_cookie": true
+    },
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000002000,
+     "user_agent": "UA-C/1.0",
+     "header_count": 7,
+     "has_cookie": true
+    },
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000003000,
+     "user_agent": "UA-D/1.0",
+     "header_count": 7,
+     "has_cookie": true
+    },
+    {
+     "method": "GET",
+     "path": "/.env",
+     "ts_ms": 1780000004000,
+     "user_agent": "UA-E/1.0",
+     "header_count": 7,
+     "has_cookie": false
+    }
+   ],
+   "expected": [
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [
+      "scanner_path",
+      "ua_rotation"
+     ],
+     "verdict": "throttle",
+     "score": 45,
+     "reason_code": "SIG-101"
+    }
+   ]
+  },
+  {
+   "id": "v12-no-cookie-persistence",
+   "client_ip": "203.0.113.16",
+   "allowlisted_ips": [],
+   "requests": [
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000000000,
+     "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+     "header_count": 8,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000001000,
+     "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+     "header_count": 8,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000002000,
+     "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+     "header_count": 8,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000003000,
+     "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+     "header_count": 8,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000004000,
+     "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+     "header_count": 8,
+     "has_cookie": false
+    }
+   ],
+   "expected": [
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [
+      "no_cookie_persistence"
+     ],
+     "verdict": "tag",
+     "score": 15,
+     "reason_code": "SIG-108"
+    }
+   ]
+  },
+  {
+   "id": "v13-no-cookie-gated",
+   "client_ip": "203.0.113.17",
+   "allowlisted_ips": [],
+   "requests": [
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000000000,
+     "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+     "header_count": 8,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000001000,
+     "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+     "header_count": 8,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000002000,
+     "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+     "header_count": 8,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000003000,
+     "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+     "header_count": 8,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/.env",
+     "ts_ms": 1780000004000,
+     "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+     "header_count": 8,
+     "has_cookie": false
+    }
+   ],
+   "expected": [
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [
+      "scanner_path"
+     ],
+     "verdict": "decoy_route",
+     "score": 25,
+     "reason_code": "SIG-101"
+    }
+   ]
+  },
+  {
+   "id": "v14-session-expiry",
+   "client_ip": "203.0.113.18",
+   "allowlisted_ips": [],
+   "requests": [
+    {
+     "method": "GET",
+     "path": "/.env",
+     "ts_ms": 1780000000000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 8,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/about",
+     "ts_ms": 1780001860000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 9,
+     "has_cookie": true
+    },
+    {
+     "method": "GET",
+     "path": "/.env",
+     "ts_ms": 1780001861000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 8,
+     "has_cookie": false
+    }
+   ],
+   "expected": [
+    {
+     "signals": [
+      "scanner_path"
+     ],
+     "verdict": "decoy_route",
+     "score": 25,
+     "reason_code": "SIG-101"
+    },
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [
+      "scanner_path"
+     ],
+     "verdict": "decoy_route",
+     "score": 25,
+     "reason_code": "SIG-101"
+    }
+   ]
+  },
+  {
+   "id": "v15-normalization",
+   "client_ip": "203.0.113.19",
+   "allowlisted_ips": [],
+   "requests": [
+    {
+     "method": "GET",
+     "path": "/shop/../wp-config.php.bak?debug=1",
+     "ts_ms": 1780000000000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 8,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/../../.env",
+     "ts_ms": 1780000001000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 8,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/a/../../..",
+     "ts_ms": 1780000002000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 8,
+     "has_cookie": false
+    }
+   ],
+   "expected": [
+    {
+     "signals": [
+      "scanner_path"
+     ],
+     "verdict": "tag",
+     "score": 25,
+     "reason_code": "SIG-101"
+    },
+    {
+     "signals": [
+      "scanner_path"
+     ],
+     "verdict": "decoy_route",
+     "score": 50,
+     "reason_code": "SIG-101"
+    },
+    {
+     "signals": [
+      "scanner_path"
+     ],
+     "verdict": "tag",
+     "score": 75,
+     "reason_code": "SIG-101"
+    }
+   ]
+  },
+  {
+   "id": "v16-ua-rotation-plus",
+   "client_ip": "203.0.113.21",
+   "allowlisted_ips": [],
+   "requests": [
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000000000,
+     "user_agent": "Rot-A/1.0",
+     "header_count": 7,
+     "has_cookie": true
+    },
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000001000,
+     "user_agent": "Rot-B/1.0",
+     "header_count": 7,
+     "has_cookie": true
+    },
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000002000,
+     "user_agent": "Rot-C/1.0",
+     "header_count": 7,
+     "has_cookie": true
+    },
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000003000,
+     "user_agent": "Rot-D/1.0",
+     "header_count": 7,
+     "has_cookie": true
+    },
+    {
+     "method": "GET",
+     "path": "/admin/login",
+     "ts_ms": 1780000004000,
+     "user_agent": "Rot-E/1.0",
+     "header_count": 7,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000005000,
+     "user_agent": "Rot-F/1.0",
+     "header_count": 7,
+     "has_cookie": true
+    },
+    {
+     "method": "GET",
+     "path": "/products",
+     "ts_ms": 1780000006000,
+     "user_agent": "Rot-G/1.0",
+     "header_count": 2,
+     "has_cookie": false
+    }
+   ],
+   "expected": [
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [
+      "decoy_hit",
+      "ua_rotation"
+     ],
+     "verdict": "throttle",
+     "score": 50,
+     "reason_code": "SIG-102"
+    },
+    {
+     "signals": [],
+     "verdict": "tag",
+     "score": 50,
+     "reason_code": "SIG-000"
+    },
+    {
+     "signals": [
+      "headers_sparse"
+     ],
+     "verdict": "tag",
+     "score": 60,
+     "reason_code": "SIG-109"
+    }
+   ]
+  },
+  {
+   "id": "v17-combination-ban",
+   "client_ip": "203.0.113.22",
+   "allowlisted_ips": [],
+   "requests": [
+    {
+     "method": "GET",
+     "path": "/u1",
+     "ts_ms": 1780000001000,
+     "user_agent": "",
+     "header_count": 2,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/u2",
+     "ts_ms": 1780000002000,
+     "user_agent": "",
+     "header_count": 2,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/u3",
+     "ts_ms": 1780000003000,
+     "user_agent": "",
+     "header_count": 2,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/u4",
+     "ts_ms": 1780000004000,
+     "user_agent": "",
+     "header_count": 2,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/u5",
+     "ts_ms": 1780000005000,
+     "user_agent": "",
+     "header_count": 2,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/u6",
+     "ts_ms": 1780000006000,
+     "user_agent": "",
+     "header_count": 2,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/u7",
+     "ts_ms": 1780000007000,
+     "user_agent": "",
+     "header_count": 2,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/u8",
+     "ts_ms": 1780000008000,
+     "user_agent": "",
+     "header_count": 2,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/.env",
+     "ts_ms": 1780000008000,
+     "user_agent": "",
+     "header_count": 2,
+     "has_cookie": false
+    }
+   ],
+   "expected": [
+    {
+     "signals": [
+      "headers_sparse",
+      "ua_missing"
+     ],
+     "verdict": "tag",
+     "score": 20,
+     "reason_code": "SIG-109"
+    },
+    {
+     "signals": [
+      "headers_sparse",
+      "ua_missing"
+     ],
+     "verdict": "tag",
+     "score": 40,
+     "reason_code": "SIG-109"
+    },
+    {
+     "signals": [
+      "headers_sparse",
+      "ua_missing"
+     ],
+     "verdict": "tag",
+     "score": 60,
+     "reason_code": "SIG-109"
+    },
+    {
+     "signals": [
+      "headers_sparse",
+      "ua_missing"
+     ],
+     "verdict": "tag",
+     "score": 80,
+     "reason_code": "SIG-109"
+    },
+    {
+     "signals": [
+      "headers_sparse",
+      "ua_missing"
+     ],
+     "verdict": "tag",
+     "score": 100,
+     "reason_code": "SIG-109"
+    },
+    {
+     "signals": [
+      "headers_sparse",
+      "ua_missing"
+     ],
+     "verdict": "tag",
+     "score": 120,
+     "reason_code": "SIG-109"
+    },
+    {
+     "signals": [
+      "headers_sparse",
+      "ua_missing"
+     ],
+     "verdict": "tag",
+     "score": 140,
+     "reason_code": "SIG-109"
+    },
+    {
+     "signals": [
+      "path_enumeration",
+      "headers_sparse",
+      "ua_missing"
+     ],
+     "verdict": "throttle",
+     "score": 185,
+     "reason_code": "SIG-105"
+    },
+    {
+     "signals": [
+      "scanner_path",
+      "path_enumeration",
+      "headers_sparse",
+      "ua_missing"
+     ],
+     "verdict": "ban",
+     "score": 255,
+     "reason_code": "SIG-101"
+    }
+   ]
+  },
+  {
+   "id": "v18-query-and-slash",
+   "client_ip": "203.0.113.23",
+   "allowlisted_ips": [],
+   "requests": [
+    {
+     "method": "GET",
+     "path": "/.env?token=abc123",
+     "ts_ms": 1780000000000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 8,
+     "has_cookie": false
+    },
+    {
+     "method": "GET",
+     "path": "/phpmyadmin-old",
+     "ts_ms": 1780000001000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 8,
+     "has_cookie": false
+    }
+   ],
+   "expected": [
+    {
+     "signals": [
+      "scanner_path"
+     ],
+     "verdict": "decoy_route",
+     "score": 25,
+     "reason_code": "SIG-101"
+    },
+    {
+     "signals": [
+      "scanner_path"
+     ],
+     "verdict": "tag",
+     "score": 50,
+     "reason_code": "SIG-101"
+    }
+   ]
+  },
+  {
+   "id": "v19-honeytoken-reuse",
+   "client_ip": "203.0.113.24",
+   "allowlisted_ips": [],
+   "requests": [
+    {
+     "method": "GET",
+     "path": "/.env",
+     "ts_ms": 1780000000000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 8,
+     "has_cookie": false
+    },
+    {
+     "method": "POST",
+     "path": "/api/v2/users",
+     "ts_ms": 1780000001000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 8,
+     "has_cookie": false,
+     "auth_hint": "postgres://deploy:mrg_live_1aae9c952da11715b60a8218@db.test:5432/staging"
+    }
+   ],
+   "expected": [
+    {
+     "signals": [
+      "scanner_path"
+     ],
+     "verdict": "decoy_route",
+     "score": 25,
+     "reason_code": "SIG-101"
+    },
+    {
+     "signals": [
+      "honeytoken_use"
+     ],
+     "verdict": "ban",
+     "score": 75,
+     "reason_code": "SIG-104"
+    }
+   ]
+  },
+  {
+   "id": "v20-ip-spoof-rejected",
+   "client_ip": "198.51.100.5",
+   "allowlisted_ips": [],
+   "requests": [
+    {
+     "method": "GET",
+     "path": "/about",
+     "ts_ms": 1780000000000,
+     "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+     "header_count": 9,
+     "has_cookie": true,
+     "x_forwarded_for": "203.0.113.99"
+    }
+   ],
+   "expected": [
+    {
+     "signals": [],
+     "verdict": "observe",
+     "score": 0,
+     "reason_code": "SIG-000"
+    }
+   ]
+  }
+ ]
+}

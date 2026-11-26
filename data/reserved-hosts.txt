@@ -1,0 +1,18 @@
+# Reserved hosts and networks for all decoy content (I14). RFC 5737 / RFC 2606.
+# Decoy hostnames and addresses MUST come from this list; the validation
+# suite lints every rendered decoy against it.
+
+# Reserved hostnames
+example.com
+example.net
+example.org
+*.test
+*.invalid
+*.example
+
+# Reserved networks (RFC 5737 documentation ranges)
+192.0.2.0/24    # TEST-NET-1
+198.51.100.0/24 # TEST-NET-2
+203.0.113.0/24 # TEST-NET-3
+
+# Never-scored additions (loopback handled in config; see SIGNALS §2)

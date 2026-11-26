@@ -1,0 +1,10 @@
+# Verified search-engine bot hints — case-insensitive substring match
+# (SIGNALS §2). Requests from these UAs are never scored and never see
+# decoys (I12). The Go core optionally strengthens Googlebot verification
+# with reverse DNS + forward confirmation; the hint list is the hot-path gate.
+googlebot
+bingbot
+duckduckbot
+baiduspider
+yandexbot
+slurp
