@@ -6,6 +6,45 @@ All notable changes to Mirage are documented here. Format follows
 
 ## [Unreleased]
 
+### Added — 2026-11-26 (build/docs round)
+
+- Build layer: a root `Makefile` with the full gate set — `help` (default),
+  `fmt`/`fmt-check`, `vet`, `build`, `test` (`-race`), `vectors` (the
+  golden-vector cross-check), `slop` (a word-boundary, case-sensitive grep
+  gate over `*.go`, `*.ts`, `*.mjs`, `*.sh` and the `Makefile` itself for
+  unfinished-work markers, with the decoy-template slot word allowed only
+  in the renderers that own it), `check` (every gate CI runs) and `clean`
+  (never touches `mirage.db` or dotfiles). `worker-build`/`worker-test`
+  add the worker suite behind an explicit needs-network note.
+- CI (`.github/workflows/ci.yml`): two jobs on every push to `main`, every
+  pull request and manual dispatch — the `go` job (setup-go from
+  `go.mod`, then `make fmt-check vet build test vectors slop`) and the
+  `worker` job (setup-node 20 with the npm cache, then `npm ci`, `npm run
+  build`, `npm test` in `packages/mirage-worker`).
+- `mirage.example.yaml`: the complete annotated config surface of
+  `internal/config` — every key with default, bound and rationale, the
+  mode table inline, the loopback dashboard-token requirement, and the
+  connector blocks with secrets resolved from `*_env` environment
+  variables only.
+- Deploy guides: `docs/deploy/quickstart.md` (zero to verified build with
+  today's honest status), `docs/deploy/nginx.md` (transparent-proxy
+  topology, `X-Forwarded-For`/`trusted_proxies` (I6), the deny map,
+  the fail-open contract (I1)) and `docs/deploy/cloudflare-worker.md`
+  (build, `wrangler.toml`, deploy, secrets, shared-data regeneration,
+  fail-open semantics).
+- `docs/vendor-notes.md`: the pinned CrowdSec LAPI surface, the Cloudflare
+  access-rules API, the webhook receiver contract with the
+  `X-Mirage-Signature` (hex HMAC-SHA256 over the raw body) verification
+  recipe, and the shared retry envelope.
+- Policy files: `SECURITY.md` (private vulnerability reporting, `mrg_`
+  honeytoken namespace, reserved hosts/ranges, supported = `main` only),
+  `CONTRIBUTING.md` (dev setup, the spec-first rule, render parity, the
+  zero-slop rule, commit/branch style, the license split), `CODEOWNERS`
+  and a PR checklist template.
+- README: architecture overview (packages table), connectors table, CI
+  badge, quickstart pointer and an honest status section — server binary
+  and Go edge middleware remain in development.
+
 ### Fixed — 2026-11-26 (render-parity round)
 
 - `{{SEED:*}}` derivation is now per-spec-string occurrence-counted:

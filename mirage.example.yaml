@@ -1,0 +1,209 @@
+# Mirage site configuration — complete annotated example.
+#
+# Copy to `mirage.yaml` (already gitignored), set `dashboard_token`, adjust
+# `mode`, and go. Every key of the config schema is documented here with its
+# default, its validation bound and the reason it exists.
+#
+# Loading is strict (internal/config): a YAML file must decode against the
+# schema with KnownFields enabled — a typo or an unknown key is a boot-time
+# error, never a silently disabled security control. Every validation rule
+# below is enforced by config.Validate, which lists ALL violations before
+# failing; Mirage fails closed at boot and open at request time (I1).
+
+# ---------------------------------------------------------------------------
+# Identity and network
+# ---------------------------------------------------------------------------
+
+# Operating mode — the integration ladder, one rung per value:
+#
+#   look       Observe and record only. No decoys are served, nothing is
+#              ever enforced. The safest starting point and the default
+#              when the key is absent.
+#
+#   tripwires  Observe plus decoys: sessions already scored suspicious are
+#              served inert decoy content on decoy routes (I12: never to
+#              verified bots or ordinary visitors). Still no enforcement.
+#
+#   protect    Enforcement becomes possible — but only when
+#              `enforcement.enabled` is also set, the kill switch is off and
+#              the budgets are not exhausted (I5, I9, I15). Mode protect
+#              alone does not turn anything on.
+#
+# Moving up a rung is a config change; moving down is deleting one line.
+# Default: "look". Valid values: "look", "tripwires", "protect" (anything
+# else is rejected at boot).
+mode: "look"
+
+# Site name or origin URL, used in dashboards and reports. Free text.
+# Default: "" (empty).
+site: "example.com"
+
+# The address Mirage's core API and dashboard listen on. Loopback by
+# default: the dashboard is meant to be reached through a local proxy or an
+# SSH tunnel, not the public internet. The dashboard requires a token EVEN
+# on loopback — an unauthenticated local endpoint is one curl away from a
+# full takeover. Default: "127.0.0.1:8080".
+listen: "127.0.0.1:8080"
+
+# CIDRs of proxies whose X-Forwarded-For chain Mirage will trust when
+# deriving the real client IP (I6). The chain is walked right-to-left and
+# only through listed proxies; the first non-trusted address is the client.
+# A peer that is NOT listed here has its forwarding headers ignored
+# entirely — an attacker must not be able to frame an innocent address.
+# List ONLY proxies you control (your nginx, your CDN). Every entry must
+# parse as a CIDR or boot fails. Default: none (socket address only).
+trusted_proxies:
+  - "127.0.0.1/32"   # a local nginx in front of Mirage
+  - "::1/128"        # the same over IPv6
+
+# Dashboard token. REQUIRED — must not be empty, even on loopback.
+# Generate one and paste it here:
+#
+#     openssl rand -hex 32
+#
+# The value below is a clearly fake marker; replace it before running.
+# This is the one secret carried inline in the config file; everything
+# connector-related stays in the environment (see `connectors`). Never log
+# or dump the config without redaction (I11: the loader ships Redacted()
+# for exactly that).
+dashboard_token: "CHANGE-ME-openssl-rand-hex-32"
+
+# Owner and CDN ranges that are never scored, never banned (I6, I15):
+# your office egress, your VPN, your load balancer. Requests from these
+# addresses produce verdict "observe" and record no session state. Every
+# entry must parse as a CIDR. The value below is an RFC 5737 documentation
+# address — use your real ranges. Default: none.
+owner_ips:
+  - "203.0.113.10/32"
+
+# Routes that are never decoyed and never throttle-capped by decoy logic
+# (I4). A route ending in "/" is a prefix ("/wp-admin/" covers everything
+# under it); anything else matches exactly. Absent means the canon default
+# below; an explicitly empty list (`protected_routes: []`) means no
+# protected routes — a deliberate choice you have to make out loud.
+# Default: the five routes listed here.
+protected_routes:
+  - "/wp-login.php"  # WordPress login
+  - "/wp-admin/"      # WordPress admin (prefix)
+  - "/checkout"       # commerce funnel
+  - "/cart"           # commerce funnel
+  - "/api/"           # API surface (prefix)
+
+# ---------------------------------------------------------------------------
+# Store and events
+# ---------------------------------------------------------------------------
+
+store:
+  # Store file location. SQLite in WAL mode. Default: "mirage.db".
+  path: "mirage.db"
+
+  # How long decision events are kept. Bound: 1..3650 days.
+  # Default: 30.
+  retention_days: 30
+
+  # Salt-and-hash stored client IPs. Default: true. An explicit false is
+  # honored (it survives loading) — you give up privacy for debuggability.
+  hash_ips: true
+
+events:
+  # Capacity of the bounded event queue between the request path and the
+  # store. When the queue is full the oldest entry is dropped and counted —
+  # emission never blocks a request (I3). Bound: 100..1000000.
+  # Default: 10000.
+  queue_capacity: 10000
+
+# ---------------------------------------------------------------------------
+# Decoys
+# ---------------------------------------------------------------------------
+
+decoys:
+  # Decoy catalog location: the YAML in spec/DECOY-CATALOG.md format.
+  # Default: "spec/decoy-catalog/catalog.yaml" (the shipped catalog).
+  catalog_path: "spec/decoy-catalog/catalog.yaml"
+
+  # Serve decoys at all. Default: true; an explicit false is honored and is
+  # the one-line way to take the deception layer down.
+  enabled: true
+
+# ---------------------------------------------------------------------------
+# Enforcement (opt-in, budget-capped, kill-switchable)
+# ---------------------------------------------------------------------------
+
+enforcement:
+  # Master opt-in for enforcement (I9). May only be true when mode is
+  # "protect" — enabling it in any other mode is a boot-time error. Even
+  # then the kill switch and the budgets below still gate every action.
+  # Default: false.
+  enabled: false
+
+  # The global enforcement off-switch. While true no ban or throttle is
+  # executed at all, no connector is called; the system drops to observe.
+  # Flip it when anything looks wrong — it takes effect immediately.
+  # Default: false.
+  kill_switch: false
+
+  # Ban TTL in milliseconds. Single address, short and reversible (I5,
+  # I15). Default: 1800000 (30 minutes).
+  ban_ttl_ms: 1800000
+
+  budgets:
+    # Caps so Mirage can never ban its way through legitimate traffic (I5,
+    # I15). When a budget is exceeded, enforcement drops to observe rather
+    # than over-ban. Default: 10.
+    max_bans_per_minute: 10
+
+    # Default: 100.
+    max_concurrent_bans: 100
+
+    # Maximum share of sessions that may be banned. Bound: 1..100.
+    # Default: 5.
+    max_share_pct: 5
+
+# ---------------------------------------------------------------------------
+# Connectors — how a ban (or unban) is delivered. All optional.
+#
+# No connector credential lives in this file (I11): each block carries only
+# the NAME of an environment variable holding the secret; the value is
+# resolved at call time and never stored on the Config. Set the secrets via
+# your environment or a secret store, never commit real values. A block left
+# entirely empty counts as not configured; setting any key of a block
+# requires its siblings (half-configured connectors are boot-time errors).
+# ---------------------------------------------------------------------------
+
+connectors:
+  crowdsec:
+    # Local CrowdSec LAPI — Mirage pushes bans as alerts with a single
+    # decision, origin "mirage". Both keys are required together.
+    # Default: "" (disabled).
+    lapi_url: ""      # e.g. "http://127.0.0.1:8081"
+    # Environment variable holding the LAPI machine key
+    # (set via environment/secret store, never commit real values):
+    api_key_env: ""   # e.g. "MIRAGE_CROWDSEC_LAPI_KEY"
+
+  cloudflare:
+    # Push bans as zone IP access rules; every Mirage rule carries the
+    # notes prefix "mirage: " and anything without it is never touched.
+    # All three keys are required together. Default: "" (disabled).
+    account_id: ""    # e.g. "CHANGE-ME-your-account-id"
+    zone_id: ""       # e.g. "CHANGE-ME-your-zone-id"
+    # Environment variable holding the Cloudflare API token
+    # (set via environment/secret store, never commit real values):
+    api_token_env: "" # e.g. "MIRAGE_CLOUDFLARE_API_TOKEN"
+
+  webhook:
+    # POST a signed ban/unban notice to any receiver you run (an incident
+    # bot, a firewall script). The body is JSON; the signature is
+    # hex(HMAC-SHA256(secret, body)) in the X-Mirage-Signature header.
+    # Both keys are required together. Default: "" (disabled).
+    url: ""           # e.g. "https://ops.example.net/hooks/mirage"
+    # Environment variable holding the HMAC signing secret
+    # (set via environment/secret store, never commit real values):
+    secret_env: ""   # e.g. "MIRAGE_WEBHOOK_SECRET"
+
+  denyfile:
+    # Maintain an nginx/Apache-compatible deny map at this path — the
+    # local, zero-dependency enforcement connector. Rewrites are atomic
+    # (temp file, fsync, rename), one line per address, sorted, with a
+    # "# managed by mirage" header. Single key; empty means disabled.
+    # Default: "" (disabled).
+    path: ""          # e.g. "/etc/nginx/mirage-deny.conf"
