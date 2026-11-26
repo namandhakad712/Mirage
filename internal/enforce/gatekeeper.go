@@ -176,6 +176,48 @@ func (g *Gatekeeper) RecordBan(ip string, nowMs, expiresAtMs int64) {
 	g.bans = append(g.bans, ban{ip: ip, atMs: nowMs, expiresAtMs: expiresAtMs})
 }
 
+// IsBanned reports whether ip holds a ban still active at nowMs, returning
+// the expiry of the longest-running active one. A ban that expired exactly
+// at nowMs is already inactive — the same strict inequality
+// store.BanRecords applies. The service layer calls this on the decision
+// path to renew an active ban without rescoring: a banned address must not
+// earn its way out of the ban with clean-looking requests (SIGNALS section
+// 7 makes history alone unable to escalate; renewal makes it equally unable
+// to de-escalate). When several bans are active for one address (re-banned
+// for a different reason inside the first TTL), the longest expiry wins: the
+// address stays banned as long as any recorded ban does.
+func (g *Gatekeeper) IsBanned(ip string, nowMs int64) (expiresAtMs int64, ok bool) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	best := int64(0)
+	for _, b := range g.bans {
+		if b.ip == ip && b.expiresAtMs > nowMs && b.expiresAtMs > best {
+			best = b.expiresAtMs
+		}
+	}
+	if best == 0 {
+		return 0, false
+	}
+	return best, true
+}
+
+// RevokeBan expires every active ban for ip at nowMs — the enforcement half
+// of the dashboard's one-click reversal (I5: bans are always reversible). It
+// never extends a ban: an expiry at or before nowMs is left untouched, so
+// the call is idempotent — revoking twice, or revoking an address that was
+// never banned, changes nothing. Revocation is address-scoped because the
+// gatekeeper records no reason codes; the service layer drives it after
+// deactivating the store record the operator clicked.
+func (g *Gatekeeper) RevokeBan(ip string, nowMs int64) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	for i := range g.bans {
+		if g.bans[i].ip == ip && g.bans[i].expiresAtMs > nowMs {
+			g.bans[i].expiresAtMs = nowMs
+		}
+	}
+}
+
 // MaxSharePct exposes the share-of-traffic budget for the service
 // layer, which is the only place with request counts. A ban covering
 // more than this percentage of recent traffic must not be enforced;
