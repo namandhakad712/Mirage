@@ -19,6 +19,14 @@ GO      ?= go
 PYTHON  ?= python3
 NPM     ?= npm
 
+# Version stamping for the mirage CLI (cmd/mirage): injected with
+# -ldflags -X into the package-level version/commit vars, so `mirage
+# version` reports what was built and from where. A build outside git
+# (source tarball) falls back to the in-code defaults dev/none.
+VERSION ?= $(shell git describe --tags --always 2>/dev/null || echo dev)
+COMMIT  ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo none)
+LDFLAGS := -X main.version=$(VERSION) -X main.commit=$(COMMIT)
+
 # --- slop gate --------------------------------------------------------------
 # Word-boundary, case-sensitive grep over code files (*.go, *.ts, *.mjs,
 # *.sh and this Makefile) for the classic unfinished-work markers. The
@@ -54,8 +62,9 @@ fmt-check: ## gofmt: fail if any Go file is not gofmt-clean
 vet: ## Run go vet over every package
 	$(GO) vet ./...
 
-build: ## Compile every Go package (library core; no binaries yet)
+build: ## Compile every Go package and the mirage CLI binary (bin/mirage)
 	$(GO) build ./...
+	$(GO) build -ldflags '$(LDFLAGS)' -o bin/mirage ./cmd/mirage
 
 test: ## Run every test with the race detector
 	$(GO) test -race ./...
