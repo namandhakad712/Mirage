@@ -9,6 +9,8 @@
 #   test       go test -race
 #   vectors    golden-vector cross-check (tools/gen_vectors.py)
 #   slop       grep gate over code files
+#   site-sync  regenerate the docs-site mirrors and manifests
+#   site-check verify the docs site: sync freshness + structural integrity
 #
 # The worker targets (worker-build, worker-test) need network access for
 # `npm ci`; no Go gate does. Mirage fails closed at boot and open at
@@ -44,7 +46,7 @@ slop_code_files := $(shell find . \( -name .git -o -name node_modules -o -name d
 slop_slot_exempt := ./internal/decoy/% ./packages/mirage-worker/src/render.ts ./packages/mirage-worker/test/render.test.ts
 slop_slot_files := $(filter-out $(slop_slot_exempt),$(slop_code_files))
 
-.PHONY: help fmt fmt-check vet build test vectors worker-build worker-test slop check clean
+.PHONY: help fmt fmt-check vet build test vectors worker-build worker-test slop site-sync site-check check clean
 
 help: ## Print this target list (default target)
 	@printf 'Mirage build and quality gates\n\n'
@@ -79,6 +81,13 @@ worker-build: ## Build the Cloudflare Worker (needs network: npm ci)
 
 worker-test: ## Run the Worker test suite (needs network: npm ci)
 	cd packages/mirage-worker && $(NPM) ci && $(NPM) test
+
+site-sync: ## Regenerate docs-site mirrors (spec/, data/, README, CHANGELOG) and manifests
+	$(PYTHON) tools/sync_site_docs.py
+
+site-check: ## Docs-site gates: sync freshness + structural integrity (links, nav, manifests)
+	$(PYTHON) tools/sync_site_docs.py --check
+	$(PYTHON) tools/check_site.py
 
 slop: ## Grep gate: reject unfinished-work markers in code files
 	@if [ -z "$(slop_code_files)" ]; then \

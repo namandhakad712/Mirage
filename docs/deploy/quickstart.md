@@ -6,21 +6,23 @@ category: deploy
 order: 1
 ---
 This page is the honest path from a fresh clone to a working Mirage
-installation. Read the status note first: one part of Mirage is deployable
-today, one part is still in development, and this page does not pretend
-otherwise.
+installation: build, verify, configure, serve, and watch the first
+decisions.
 
 ## Status: what runs today
 
-**Shipped and tested:** the normative specs and golden vectors, the Go core
-(config, model, store, events, enforce, connectors), the SIGNALS v1.1.0
-detection engine, the decoy data layer, and the Cloudflare Worker. **In
-development, landing with the server release:** the `mirage` server binary
-(`cmd/mirage`) and the Go edge middleware. Until then there is no `mirage
-serve` command to document — any command you see for a Mirage CLI anywhere
-else is not this project. What you can run today on real traffic is the
-[Cloudflare Worker]({{ site.baseurl }}/deploy/cloudflare-worker.html); the Go core is a library whose
-every package is verified by `make check`.
+**Shipped and tested:** everything. The normative specs and golden vectors;
+the Go core (config, model, store, events, enforce, connectors); the
+SIGNALS v1.1.0 detection engine; the decoy data layer; the in-process HTTP
+edge middleware (`internal/edge`); the `mirage` CLI — `serve`, `doctor`,
+`init`, `posture`, `replay`, `version` (`cmd/mirage`); the fault-injection
+lab; and the Cloudflare Worker port. Every gate runs in CI on every push:
+`make check` (fmt, vet, build, race tests, golden-vector cross-check,
+slop scan), the worker's npm build + test suite, and the docs-site gates.
+Run the Go core in front of an upstream with
+`mirage serve --upstream …`, or put the
+[Cloudflare Worker]({{ site.baseurl }}/deploy/cloudflare-worker.html) at
+the edge — same signals, same vectors, same verdicts.
 
 ## What you need
 
@@ -55,11 +57,18 @@ target. If `make check` is green, you have the same evidence the [CI
 workflow](https://github.com/namandhakad712/Mirage/actions/workflows/ci.yml)
 produces on main — that is the claim: deterministic gates, not trust.
 
-The build emits no binaries yet: every Go package under `internal/` is a
-library, compiled and race-tested, and the runnable surface today is the
-worker.
+The build emits `bin/mirage` (via `make build`, with the version and
+commit stamped in), the Go core under `internal/`, and the edge
+middleware — the full self-hosted surface plus the worker port.
 
 ## 3. Create your config and the dashboard token
+
+```sh
+./bin/mirage init --config mirage.yaml   # writes a minimal look-mode config
+                                         # with a crypto/rand dashboard token
+```
+
+Or hand-write it from the annotated surface:
 
 ```sh
 cp mirage.example.yaml mirage.yaml   # mirage.yaml is gitignored on purpose
@@ -85,11 +94,41 @@ Every key, default, bound and rule in that file mirrors
 half-configured connector blocks are boot-time errors), so a typo can never
 silently disable a security control.
 
-## 4. Run it (Cloudflare users: today)
+## 4. Run it (self-hosted)
 
-If your site is behind Cloudflare, Mirage is deployable now — the worker
-carries the same detection engine, the same decoy catalog snapshot and the
-same golden-vector parity, in-process, with no runtime dependencies:
+```sh
+./bin/mirage doctor  --config mirage.yaml   # 6 pre-flight checks, exits 1 on any failure
+./bin/mirage posture --config mirage.yaml   # mode, budgets, routes, warnings
+./bin/mirage serve   --config mirage.yaml --upstream http://127.0.0.1:9000
+```
+
+`serve` composes the whole stack — store, engine, catalog, queue,
+gatekeeper, connectors — into the edge middleware: benign traffic proxies
+through to the upstream, scanner paths are answered with persona decoys
+(from `tripwires` mode up), and the token-guarded dashboard listens on
+loopback at `--dashboard-addr` (default `127.0.0.1:8090`; non-loopback
+binds are refused). A realistic first session:
+
+```sh
+curl http://127.0.0.1:8080/            # 200 from your upstream
+curl http://127.0.0.1:8080/.env        # scored: scanner_path (+ tooling_curl for curl's UA)
+curl -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8090/api/events
+```
+
+Note that requests from loopback are never scored (I6, I15) — exercise
+the decision path from a real address. `mirage replay` re-runs the golden
+vectors through the full composed service any time you want proof the
+arithmetic still holds.
+
+The reverse-proxy topology in front of `serve` — TLS termination,
+`X-Forwarded-For`, `trusted_proxies`, the deny map — is documented in
+[nginx.md]({{ site.baseurl }}/deploy/nginx.html).
+
+## 5. Run it at the edge (Cloudflare)
+
+If your site is behind Cloudflare, the worker carries the same detection
+engine, the same decoy catalog snapshot and the same golden-vector parity,
+in-process, with no runtime dependencies:
 
 ```sh
 cd packages/mirage-worker
@@ -102,26 +141,9 @@ The full walkthrough (wrangler.toml, routes, the reserved
 `MIRAGE_TOKENS` binding, how the shared catalog data is regenerated,
 fail-open semantics) is in [cloudflare-worker.md]({{ site.baseurl }}/deploy/cloudflare-worker.html).
 
-## 5. Run it (self-hosted: when the server lands)
-
-The `mirage` server binary — the process that reads `mirage.yaml`, serves
-the dashboard on `listen`, scores requests and drives the connectors — is
-in development and lands with the server release. Your `mirage.yaml` is
-already the complete config surface it will read, so nothing you did above
-is throwaway. When the binary ships, this section becomes the `serve`
-instructions; watch [CHANGELOG.md](https://github.com/namandhakad712/Mirage/blob/main/CHANGELOG.md) for the release.
-
-What you can already do today around the future server:
-
-- Prepare the reverse-proxy side: [nginx.md]({{ site.baseurl }}/deploy/nginx.html) documents the
-  transparent-proxy topology (TLS termination, `X-Forwarded-For`,
-  `trusted_proxies`) and the deny-map include.
-- Prepare connectors: [vendor-notes.md]({{ site.baseurl }}/vendor-notes.html) documents exactly
-  what Mirage calls on CrowdSec, Cloudflare and webhook receivers, with
-  the retry envelope and the `X-Mirage-Signature` verification recipe.
-- Deploy the worker at the edge and add the self-hosted core later — the
-  two implement one spec and produce identical verdicts on the shared
-  golden vectors.
+Both shapes implement one spec and produce identical verdicts on the
+shared golden vectors — deploy the worker at the edge, the self-hosted
+core at the origin, or both.
 
 ## 6. Upgrading modes later
 
@@ -138,8 +160,8 @@ from anywhere on the ladder.
 ## Where to go next
 
 - [nginx.md]({{ site.baseurl }}/deploy/nginx.html) — transparent-proxy integration, the deny map.
-- [cloudflare-worker.md]({{ site.baseurl }}/deploy/cloudflare-worker.html) — the edge deployment that
-  runs today.
+- [cloudflare-worker.md]({{ site.baseurl }}/deploy/cloudflare-worker.html) — the edge deployment.
+- [reference/cli.md]({{ site.baseurl }}/reference/cli.html) — every subcommand, flag and exit code.
 - [vendor-notes.md]({{ site.baseurl }}/vendor-notes.html) — CrowdSec, Cloudflare and the webhook
   receiver contract.
 - [SECURITY.md](https://github.com/namandhakad712/Mirage/blob/main/SECURITY.md) — how to report a vulnerability and what

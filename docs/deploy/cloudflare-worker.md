@@ -135,8 +135,10 @@ Fail-open is the contract (ADAPTER-PROTOCOL §3, I1), implemented in
 - **Local actions only, when a verdict says so:** `decoy_route` serves the
   decoy rendered locally from the in-bundle catalog snapshot — never a
   network fetch, never a redirect (I3, I2, I8); `throttle` answers 429
-  with `Retry-After: 30` and `Cache-Control: no-store`; `ban` answers 403
-  with `X-Mirage-Ban-Ttl` (seconds) and `no-store`.
+  with `Retry-After: 30` and nothing else; `ban` answers 403 with a plain
+  body and nothing else. No response header names Mirage or leaks the ban
+  TTL (ADR-0001) — the header set matches the Go edge byte for byte, and
+  remaining TTL is an operator concern that lives in the event stream.
 - **Stateless across isolates.** Workers share no memory between
   invocations, so durable bans and throttles belong to the Go core; the
   worker's `ban`/`throttle` are per-request local responses. Long-horizon

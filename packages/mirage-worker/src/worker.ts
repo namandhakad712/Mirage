@@ -284,25 +284,28 @@ export function createHandler(deps: HandlerDeps = {}): MirageHandler {
       }
       case "throttle":
         // Local throttle only; the origin is protected but never hard-failed
-        // by Mirage itself (§3). no-store so shared caches don't extend it.
+        // by Mirage itself (§3). Header set matches the Go edge byte for
+        // byte: 429, Retry-After, plain body, and NOTHING else — no
+        // Cache-Control, no marker (ADR-0001: no public Mirage marker;
+        // Cloudflare does not cache 4xx/429 by default).
         return new Response(THROTTLE_BODY, {
           status: 429,
           headers: {
             "Content-Type": "text/plain; charset=utf-8",
             "Retry-After": "30",
-            "Cache-Control": "no-store",
           },
         });
       case "ban":
         // Local block with the short TTL; no state is persisted (the Go core
-        // owns enforcement). TTL is reported in seconds, matching the
-        // Retry-After convention; the decision itself carries milliseconds.
+        // owns enforcement). The response is indistinguishable from a stock
+        // origin denial (ADR-0001): 403, plain body, no TTL header — a
+        // TTL header would both fingerprint Mirage and hand the attacker
+        // the exact retry moment. Remaining TTL is an operator concern:
+        // it lives in the event stream and the dashboard, never on the wire.
         return new Response(BAN_BODY, {
           status: 403,
           headers: {
             "Content-Type": "text/plain; charset=utf-8",
-            "X-Mirage-Ban-Ttl": String(Math.floor((decision.banTtlMs ?? 0) / 1000)),
-            "Cache-Control": "no-store",
           },
         });
     }

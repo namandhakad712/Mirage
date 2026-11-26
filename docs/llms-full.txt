@@ -2031,21 +2031,23 @@ Invariant I6. The request carries X-Forwarded-For: 203.0.113.99, but the peer is
 Source: deploy/quickstart.md — https://namandhakad712.github.io/Mirage/deploy/quickstart.html
 
 This page is the honest path from a fresh clone to a working Mirage
-installation. Read the status note first: one part of Mirage is deployable
-today, one part is still in development, and this page does not pretend
-otherwise.
+installation: build, verify, configure, serve, and watch the first
+decisions.
 
 ## Status: what runs today
 
-**Shipped and tested:** the normative specs and golden vectors, the Go core
-(config, model, store, events, enforce, connectors), the SIGNALS v1.1.0
-detection engine, the decoy data layer, and the Cloudflare Worker. **In
-development, landing with the server release:** the `mirage` server binary
-(`cmd/mirage`) and the Go edge middleware. Until then there is no `mirage
-serve` command to document — any command you see for a Mirage CLI anywhere
-else is not this project. What you can run today on real traffic is the
-[Cloudflare Worker]({{ site.baseurl }}/deploy/cloudflare-worker.html); the Go core is a library whose
-every package is verified by `make check`.
+**Shipped and tested:** everything. The normative specs and golden vectors;
+the Go core (config, model, store, events, enforce, connectors); the
+SIGNALS v1.1.0 detection engine; the decoy data layer; the in-process HTTP
+edge middleware (`internal/edge`); the `mirage` CLI — `serve`, `doctor`,
+`init`, `posture`, `replay`, `version` (`cmd/mirage`); the fault-injection
+lab; and the Cloudflare Worker port. Every gate runs in CI on every push:
+`make check` (fmt, vet, build, race tests, golden-vector cross-check,
+slop scan), the worker's npm build + test suite, and the docs-site gates.
+Run the Go core in front of an upstream with
+`mirage serve --upstream …`, or put the
+[Cloudflare Worker]({{ site.baseurl }}/deploy/cloudflare-worker.html) at
+the edge — same signals, same vectors, same verdicts.
 
 ## What you need
 
@@ -2080,11 +2082,18 @@ target. If `make check` is green, you have the same evidence the [CI
 workflow](https://github.com/namandhakad712/Mirage/actions/workflows/ci.yml)
 produces on main — that is the claim: deterministic gates, not trust.
 
-The build emits no binaries yet: every Go package under `internal/` is a
-library, compiled and race-tested, and the runnable surface today is the
-worker.
+The build emits `bin/mirage` (via `make build`, with the version and
+commit stamped in), the Go core under `internal/`, and the edge
+middleware — the full self-hosted surface plus the worker port.
 
 ## 3. Create your config and the dashboard token
+
+```sh
+./bin/mirage init --config mirage.yaml   # writes a minimal look-mode config
+                                         # with a crypto/rand dashboard token
+```
+
+Or hand-write it from the annotated surface:
 
 ```sh
 cp mirage.example.yaml mirage.yaml   # mirage.yaml is gitignored on purpose
@@ -2110,11 +2119,41 @@ Every key, default, bound and rule in that file mirrors
 half-configured connector blocks are boot-time errors), so a typo can never
 silently disable a security control.
 
-## 4. Run it (Cloudflare users: today)
+## 4. Run it (self-hosted)
 
-If your site is behind Cloudflare, Mirage is deployable now — the worker
-carries the same detection engine, the same decoy catalog snapshot and the
-same golden-vector parity, in-process, with no runtime dependencies:
+```sh
+./bin/mirage doctor  --config mirage.yaml   # 6 pre-flight checks, exits 1 on any failure
+./bin/mirage posture --config mirage.yaml   # mode, budgets, routes, warnings
+./bin/mirage serve   --config mirage.yaml --upstream http://127.0.0.1:9000
+```
+
+`serve` composes the whole stack — store, engine, catalog, queue,
+gatekeeper, connectors — into the edge middleware: benign traffic proxies
+through to the upstream, scanner paths are answered with persona decoys
+(from `tripwires` mode up), and the token-guarded dashboard listens on
+loopback at `--dashboard-addr` (default `127.0.0.1:8090`; non-loopback
+binds are refused). A realistic first session:
+
+```sh
+curl http://127.0.0.1:8080/            # 200 from your upstream
+curl http://127.0.0.1:8080/.env        # scored: scanner_path (+ tooling_curl for curl's UA)
+curl -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8090/api/events
+```
+
+Note that requests from loopback are never scored (I6, I15) — exercise
+the decision path from a real address. `mirage replay` re-runs the golden
+vectors through the full composed service any time you want proof the
+arithmetic still holds.
+
+The reverse-proxy topology in front of `serve` — TLS termination,
+`X-Forwarded-For`, `trusted_proxies`, the deny map — is documented in
+[nginx.md]({{ site.baseurl }}/deploy/nginx.html).
+
+## 5. Run it at the edge (Cloudflare)
+
+If your site is behind Cloudflare, the worker carries the same detection
+engine, the same decoy catalog snapshot and the same golden-vector parity,
+in-process, with no runtime dependencies:
 
 ```sh
 cd packages/mirage-worker
@@ -2127,26 +2166,9 @@ The full walkthrough (wrangler.toml, routes, the reserved
 `MIRAGE_TOKENS` binding, how the shared catalog data is regenerated,
 fail-open semantics) is in [cloudflare-worker.md]({{ site.baseurl }}/deploy/cloudflare-worker.html).
 
-## 5. Run it (self-hosted: when the server lands)
-
-The `mirage` server binary — the process that reads `mirage.yaml`, serves
-the dashboard on `listen`, scores requests and drives the connectors — is
-in development and lands with the server release. Your `mirage.yaml` is
-already the complete config surface it will read, so nothing you did above
-is throwaway. When the binary ships, this section becomes the `serve`
-instructions; watch [CHANGELOG.md](https://github.com/namandhakad712/Mirage/blob/main/CHANGELOG.md) for the release.
-
-What you can already do today around the future server:
-
-- Prepare the reverse-proxy side: [nginx.md]({{ site.baseurl }}/deploy/nginx.html) documents the
-  transparent-proxy topology (TLS termination, `X-Forwarded-For`,
-  `trusted_proxies`) and the deny-map include.
-- Prepare connectors: [vendor-notes.md]({{ site.baseurl }}/vendor-notes.html) documents exactly
-  what Mirage calls on CrowdSec, Cloudflare and webhook receivers, with
-  the retry envelope and the `X-Mirage-Signature` verification recipe.
-- Deploy the worker at the edge and add the self-hosted core later — the
-  two implement one spec and produce identical verdicts on the shared
-  golden vectors.
+Both shapes implement one spec and produce identical verdicts on the
+shared golden vectors — deploy the worker at the edge, the self-hosted
+core at the origin, or both.
 
 ## 6. Upgrading modes later
 
@@ -2163,8 +2185,8 @@ from anywhere on the ladder.
 ## Where to go next
 
 - [nginx.md]({{ site.baseurl }}/deploy/nginx.html) — transparent-proxy integration, the deny map.
-- [cloudflare-worker.md]({{ site.baseurl }}/deploy/cloudflare-worker.html) — the edge deployment that
-  runs today.
+- [cloudflare-worker.md]({{ site.baseurl }}/deploy/cloudflare-worker.html) — the edge deployment.
+- [reference/cli.md]({{ site.baseurl }}/reference/cli.html) — every subcommand, flag and exit code.
 - [vendor-notes.md]({{ site.baseurl }}/vendor-notes.html) — CrowdSec, Cloudflare and the webhook
   receiver contract.
 - [SECURITY.md](https://github.com/namandhakad712/Mirage/blob/main/SECURITY.md) — how to report a vulnerability and what
@@ -2471,8 +2493,10 @@ Fail-open is the contract (ADAPTER-PROTOCOL §3, I1), implemented in
 - **Local actions only, when a verdict says so:** `decoy_route` serves the
   decoy rendered locally from the in-bundle catalog snapshot — never a
   network fetch, never a redirect (I3, I2, I8); `throttle` answers 429
-  with `Retry-After: 30` and `Cache-Control: no-store`; `ban` answers 403
-  with `X-Mirage-Ban-Ttl` (seconds) and `no-store`.
+  with `Retry-After: 30` and nothing else; `ban` answers 403 with a plain
+  body and nothing else. No response header names Mirage or leaks the ban
+  TTL (ADR-0001) — the header set matches the Go edge byte for byte, and
+  remaining TTL is an operator concern that lives in the event stream.
 - **Stateless across isolates.** Workers share no memory between
   invocations, so durable bans and throttles belong to the Go core; the
   worker's `ban`/`throttle` are per-request local responses. Long-horizon
@@ -2516,8 +2540,11 @@ opportunistic crawlers) and answers it with inert decoys. It never breaks the
 site it protects, and it never pollutes the public web.
 
 **Start here: [docs/deploy/quickstart.md]({{ site.baseurl }}/deploy/quickstart.html)** — from
-zero to a verified build, a config with a generated dashboard token, and the
-Cloudflare Worker deployment that runs today.
+zero to a verified build, a config with a generated dashboard token, a
+running `mirage serve` proxy, or the Cloudflare Worker at the edge.
+**Hosted docs:** https://namandhakad712.github.io/Mirage/ — the whole
+guide, the specs, and a machine-readable surface (`/llms.txt`,
+`/docs.json`) for AI agents.
 
 ## What it is
 
@@ -2613,19 +2640,19 @@ every action is explainable, and no internet pollution (I12–I15).
 ```
 Makefile             build and quality gates (make check runs every CI gate)
 mirage.example.yaml  the complete annotated config surface
-docs/                invariants, charter, claims policy, known limits, ADRs,
-                     design, deploy guides (quickstart, nginx, worker)
+docs/                the hosted documentation site (guide, reference,
+                     specs, deploy guides) and the project constitution
 spec/                normative specs: signals, adapter protocol, decoy catalog,
                      golden vectors shared by all implementations
 data/                shared data files (scanner paths, UA patterns, token formats,
                      reserved hosts, reason texts) used by Go and TypeScript alike
 internal/            Go core: model, config, store, events, detect, decoy,
-                     enforce, connectors
-cmd/mirage/          CLI: init, doctor, serve, replay, posture (in development,
-                     lands with the server release)
+                     edge (HTTP middleware), enforce, connectors
+cmd/mirage/          the mirage CLI: init, doctor, posture, replay, serve,
+                     version
 packages/            mirage-worker — TypeScript Cloudflare Worker (Apache-2.0)
-lab/                 fault-injection and adversarial test lab (in development)
-tools/               vector generator and other deterministic tooling
+lab/                 fault-injection and adversarial test lab
+tools/               vector generator, docs-site sync + integrity gates
 ```
 
 Two implementations, one spec: the Go core and the TypeScript worker must
@@ -2634,8 +2661,8 @@ divergence.
 
 ## Status
 
-Foundation stage — staged, gated rounds, no releases yet (the changelog
-tracks only `[Unreleased]`). What exists now:
+All components shipped and gated; no releases yet (the changelog tracks
+only `[Unreleased]`). What exists now:
 
 - The constitution: fifteen invariants, charter, claims policy, known
   limits, ADRs.
@@ -2646,13 +2673,19 @@ tracks only `[Unreleased]`). What exists now:
 - The Go core: model, config, store, events, enforce and connectors,
   race-tested.
 - The decision engine (SIGNALS v1.1.0 in code) and the decoy data layer.
-- The Cloudflare Worker — deployable today.
-- The build layer: Makefile gates, CI, and the full example config.
+- The Go edge middleware and the `mirage` CLI — `serve` (transparent
+  proxy + loopback dashboard), `doctor`, `init`, `posture`, `replay`,
+  `version`, with `--json` machine output on the reporting commands.
+- The fault-injection lab proving the invariants hold under store, queue,
+  connector, budget, deadline and kill-switch faults.
+- The Cloudflare Worker — deployable today, response-identical to the Go
+  edge on the shared vectors.
+- The build layer: Makefile gates, CI (Go + worker + docs), the full
+  example config, and the hosted documentation site with its sync and
+  integrity tooling.
 
-In development: the `mirage` server binary (`cmd/mirage`) and the Go edge
-middleware — they land with the server release; until then the Go core is a
-library and the worker is the runnable edge. Version 1.0 is defined by exit
-criteria, not a date — see [docs/design/MIRAGE-DESIGN.md]({{ site.baseurl }}/design/MIRAGE-DESIGN.html)
+Version 1.0 is defined by exit criteria, not a date — see
+[docs/design/MIRAGE-DESIGN.md]({{ site.baseurl }}/design/MIRAGE-DESIGN.html)
 section 12. Watch [CHANGELOG.md](https://github.com/namandhakad712/Mirage/blob/main/CHANGELOG.md) for progress.
 
 ## License
@@ -2687,6 +2720,62 @@ All notable changes to Mirage are documented here. Format follows
 [SemVer](https://semver.org/). Dates are UTC.
 
 ## [Unreleased]
+
+### Added — 2026-11-26 (server + docs-site round)
+
+- **Go edge middleware (`internal/edge`)**: the in-process HTTP adapter —
+  request extraction mirroring the Worker byte for byte (raw path, header
+  count including Host, cookie presence, `ClientIPFrom` trusted-proxy walk
+  per I6), decision application (pass / serve_decoy with the persona
+  render / 429 + `Retry-After: 30` / plain 403), a defensive wall-clock
+  fail-open guard around `Decide` on top of the service's own budget
+  checks (I1), panic recovery on the decision and decoy paths, and strict
+  response hygiene: zero Mirage-identifying headers, ever (ADR-0001).
+  15 test groups green under `-race`, including the mode matrix, the I6
+  walk table, concurrency, and real-server header-set assertions.
+- **The `mirage` CLI (`cmd/mirage`)**: `serve` (composes the full stack
+  into the edge middleware in front of a reverse proxy; loopback-enforced,
+  token-guarded dashboard; SIGINT/SIGTERM graceful shutdown), `doctor`
+  (six pre-flight checks: config, engine data files, catalog, store
+  round-trip, connector `*_env` resolution without leaking values, kill
+  switch), `posture` (mode, budgets, routes, ranges, connectors, plus
+  footgun warnings), `init` (validated starter config with a crypto/rand
+  dashboard token), `replay` (the golden vectors through the fully
+  composed service — 20/20 cases, 68/68 requests, first-diff reporting)
+  and `version` (spec/protocol versions, ldflags-stamped git identity).
+  `doctor`, `posture` and `replay` emit `--json` machine output. 36 tests
+  green under `-race`; live smoke: init -> doctor 6/6 -> replay 20/20 ->
+  serve with real decoy serving and dashboard auth.
+- **Hosted documentation site** (GitHub Pages, Actions build with the same
+  Jekyll engine Pages runs natively): a custom design system (dark default
+  + light toggle, CSS custom-property tokens, sticky sidebar navigation,
+  right-rail table of contents, copy-button code blocks, verdict-ladder
+  visual, print-safe typography — no frameworks, no plugins, no remote
+  themes), a landing page, the 11-page guide, the reference shelf
+  (complete config key tables, CLI reference), the agent surface, and
+  synced mirrors of the normative specs and data files.
+- **Machine-readable documentation surface**: `/llms.txt` (curated index),
+  `/llms-full.txt` (flattened full text) and `/docs.json` (structured
+  manifest) — generated deterministically from the navigation and page
+  front matter, never hand-maintained.
+- **Site tooling**: `tools/sync_site_docs.py` (regenerates the spec/data
+  mirrors and the machine manifests; `--check` mode is a CI gate) and
+  `tools/check_site.py` (structural integrity: front matter, layout
+  references, navigation completeness, every internal link target, Liquid
+  safety, manifest consistency, docs slop scan). `make site-sync` /
+  `make site-check` expose both.
+- **CI**: a `docs` job (sync gate + integrity gate + the same
+  `actions/jekyll-build-pages` build the deploy uses) and a `pages`
+  workflow (gated build, artifact upload, `deploy-pages`); a deploy
+  failure never takes the previous site release down.
+- **Worker response hygiene (ADR-0001 fix)**: the Worker no longer stamps
+  `X-Mirage-Ban-Ttl` (it both fingerprinted Mirage and handed attackers
+  the exact retry moment) or `Cache-Control: no-store` on throttle/ban —
+  its header set now matches the Go edge byte for byte, and the tests
+  assert the absence of any `X-Mirage-*` header on every action.
+- Deploy guides updated to the shipped reality: the quickstart now walks
+  `mirage init`/`doctor`/`posture`/`serve` (with the loopback-never-scored
+  caveat), and the README status section reflects the complete system.
 
 ### Added — 2026-11-26 (build/docs round)
 

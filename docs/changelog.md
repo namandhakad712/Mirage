@@ -12,6 +12,62 @@ All notable changes to Mirage are documented here. Format follows
 
 ## [Unreleased]
 
+### Added — 2026-11-26 (server + docs-site round)
+
+- **Go edge middleware (`internal/edge`)**: the in-process HTTP adapter —
+  request extraction mirroring the Worker byte for byte (raw path, header
+  count including Host, cookie presence, `ClientIPFrom` trusted-proxy walk
+  per I6), decision application (pass / serve_decoy with the persona
+  render / 429 + `Retry-After: 30` / plain 403), a defensive wall-clock
+  fail-open guard around `Decide` on top of the service's own budget
+  checks (I1), panic recovery on the decision and decoy paths, and strict
+  response hygiene: zero Mirage-identifying headers, ever (ADR-0001).
+  15 test groups green under `-race`, including the mode matrix, the I6
+  walk table, concurrency, and real-server header-set assertions.
+- **The `mirage` CLI (`cmd/mirage`)**: `serve` (composes the full stack
+  into the edge middleware in front of a reverse proxy; loopback-enforced,
+  token-guarded dashboard; SIGINT/SIGTERM graceful shutdown), `doctor`
+  (six pre-flight checks: config, engine data files, catalog, store
+  round-trip, connector `*_env` resolution without leaking values, kill
+  switch), `posture` (mode, budgets, routes, ranges, connectors, plus
+  footgun warnings), `init` (validated starter config with a crypto/rand
+  dashboard token), `replay` (the golden vectors through the fully
+  composed service — 20/20 cases, 68/68 requests, first-diff reporting)
+  and `version` (spec/protocol versions, ldflags-stamped git identity).
+  `doctor`, `posture` and `replay` emit `--json` machine output. 36 tests
+  green under `-race`; live smoke: init -> doctor 6/6 -> replay 20/20 ->
+  serve with real decoy serving and dashboard auth.
+- **Hosted documentation site** (GitHub Pages, Actions build with the same
+  Jekyll engine Pages runs natively): a custom design system (dark default
+  + light toggle, CSS custom-property tokens, sticky sidebar navigation,
+  right-rail table of contents, copy-button code blocks, verdict-ladder
+  visual, print-safe typography — no frameworks, no plugins, no remote
+  themes), a landing page, the 11-page guide, the reference shelf
+  (complete config key tables, CLI reference), the agent surface, and
+  synced mirrors of the normative specs and data files.
+- **Machine-readable documentation surface**: `/llms.txt` (curated index),
+  `/llms-full.txt` (flattened full text) and `/docs.json` (structured
+  manifest) — generated deterministically from the navigation and page
+  front matter, never hand-maintained.
+- **Site tooling**: `tools/sync_site_docs.py` (regenerates the spec/data
+  mirrors and the machine manifests; `--check` mode is a CI gate) and
+  `tools/check_site.py` (structural integrity: front matter, layout
+  references, navigation completeness, every internal link target, Liquid
+  safety, manifest consistency, docs slop scan). `make site-sync` /
+  `make site-check` expose both.
+- **CI**: a `docs` job (sync gate + integrity gate + the same
+  `actions/jekyll-build-pages` build the deploy uses) and a `pages`
+  workflow (gated build, artifact upload, `deploy-pages`); a deploy
+  failure never takes the previous site release down.
+- **Worker response hygiene (ADR-0001 fix)**: the Worker no longer stamps
+  `X-Mirage-Ban-Ttl` (it both fingerprinted Mirage and handed attackers
+  the exact retry moment) or `Cache-Control: no-store` on throttle/ban —
+  its header set now matches the Go edge byte for byte, and the tests
+  assert the absence of any `X-Mirage-*` header on every action.
+- Deploy guides updated to the shipped reality: the quickstart now walks
+  `mirage init`/`doctor`/`posture`/`serve` (with the loopback-never-scored
+  caveat), and the README status section reflects the complete system.
+
 ### Added — 2026-11-26 (build/docs round)
 
 - Build layer: a root `Makefile` with the full gate set — `help` (default),

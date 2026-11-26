@@ -108,7 +108,9 @@ describe("mirage worker handler", () => {
     );
     expect(origin.called).toBe(false);
     expect(blocked.status).toBe(403);
-    expect(blocked.headers.get("X-Mirage-Ban-Ttl")).toBe("1800");
+    // ADR-0001: nothing on the wire names Mirage — no TTL header, no marker.
+    expect(blocked.headers.get("X-Mirage-Ban-Ttl")).toBeNull();
+    expect([...blocked.headers.keys()].every((k) => !k.toLowerCase().startsWith("x-mirage"))).toBe(true);
   });
 
   it("returns 429 + Retry-After on throttle (origin untouched)", async () => {
@@ -119,11 +121,13 @@ describe("mirage worker handler", () => {
     expect(origin.called).toBe(false);
     expect(response.status).toBe(429);
     expect(response.headers.get("Retry-After")).toBe("30");
-    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    // Header set matches the Go edge exactly: no Cache-Control, no marker.
+    expect(response.headers.get("Cache-Control")).toBeNull();
+    expect([...response.headers.keys()].every((k) => !k.toLowerCase().startsWith("x-mirage"))).toBe(true);
     expect(await response.text()).toBe("Too many requests. Please retry later.");
   });
 
-  it("returns 403 + X-Mirage-Ban-Ttl on ban (no persisted state)", async () => {
+  it("returns a marker-free 403 on ban (no persisted state)", async () => {
     const origin = originStub();
     const handler = createHandler({
       decide: () => makeDecision("ban", { requestScore: 50, score: 50, banTtlMs: 1_800_000, reasonCode: "SIG-104" }),
@@ -133,7 +137,8 @@ describe("mirage worker handler", () => {
 
     expect(origin.called).toBe(false);
     expect(response.status).toBe(403);
-    expect(response.headers.get("X-Mirage-Ban-Ttl")).toBe("1800");
+    expect(response.headers.get("X-Mirage-Ban-Ttl")).toBeNull();
+    expect([...response.headers.keys()].every((k) => !k.toLowerCase().startsWith("x-mirage"))).toBe(true);
     expect(await response.text()).toBe("Request blocked.");
   });
 

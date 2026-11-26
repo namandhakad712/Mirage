@@ -16,8 +16,11 @@ opportunistic crawlers) and answers it with inert decoys. It never breaks the
 site it protects, and it never pollutes the public web.
 
 **Start here: [docs/deploy/quickstart.md]({{ site.baseurl }}/deploy/quickstart.html)** — from
-zero to a verified build, a config with a generated dashboard token, and the
-Cloudflare Worker deployment that runs today.
+zero to a verified build, a config with a generated dashboard token, a
+running `mirage serve` proxy, or the Cloudflare Worker at the edge.
+**Hosted docs:** https://namandhakad712.github.io/Mirage/ — the whole
+guide, the specs, and a machine-readable surface (`/llms.txt`,
+`/docs.json`) for AI agents.
 
 ## What it is
 
@@ -113,19 +116,19 @@ every action is explainable, and no internet pollution (I12–I15).
 ```
 Makefile             build and quality gates (make check runs every CI gate)
 mirage.example.yaml  the complete annotated config surface
-docs/                invariants, charter, claims policy, known limits, ADRs,
-                     design, deploy guides (quickstart, nginx, worker)
+docs/                the hosted documentation site (guide, reference,
+                     specs, deploy guides) and the project constitution
 spec/                normative specs: signals, adapter protocol, decoy catalog,
                      golden vectors shared by all implementations
 data/                shared data files (scanner paths, UA patterns, token formats,
                      reserved hosts, reason texts) used by Go and TypeScript alike
 internal/            Go core: model, config, store, events, detect, decoy,
-                     enforce, connectors
-cmd/mirage/          CLI: init, doctor, serve, replay, posture (in development,
-                     lands with the server release)
+                     edge (HTTP middleware), enforce, connectors
+cmd/mirage/          the mirage CLI: init, doctor, posture, replay, serve,
+                     version
 packages/            mirage-worker — TypeScript Cloudflare Worker (Apache-2.0)
-lab/                 fault-injection and adversarial test lab (in development)
-tools/               vector generator and other deterministic tooling
+lab/                 fault-injection and adversarial test lab
+tools/               vector generator, docs-site sync + integrity gates
 ```
 
 Two implementations, one spec: the Go core and the TypeScript worker must
@@ -134,8 +137,8 @@ divergence.
 
 ## Status
 
-Foundation stage — staged, gated rounds, no releases yet (the changelog
-tracks only `[Unreleased]`). What exists now:
+All components shipped and gated; no releases yet (the changelog tracks
+only `[Unreleased]`). What exists now:
 
 - The constitution: fifteen invariants, charter, claims policy, known
   limits, ADRs.
@@ -146,13 +149,19 @@ tracks only `[Unreleased]`). What exists now:
 - The Go core: model, config, store, events, enforce and connectors,
   race-tested.
 - The decision engine (SIGNALS v1.1.0 in code) and the decoy data layer.
-- The Cloudflare Worker — deployable today.
-- The build layer: Makefile gates, CI, and the full example config.
+- The Go edge middleware and the `mirage` CLI — `serve` (transparent
+  proxy + loopback dashboard), `doctor`, `init`, `posture`, `replay`,
+  `version`, with `--json` machine output on the reporting commands.
+- The fault-injection lab proving the invariants hold under store, queue,
+  connector, budget, deadline and kill-switch faults.
+- The Cloudflare Worker — deployable today, response-identical to the Go
+  edge on the shared vectors.
+- The build layer: Makefile gates, CI (Go + worker + docs), the full
+  example config, and the hosted documentation site with its sync and
+  integrity tooling.
 
-In development: the `mirage` server binary (`cmd/mirage`) and the Go edge
-middleware — they land with the server release; until then the Go core is a
-library and the worker is the runnable edge. Version 1.0 is defined by exit
-criteria, not a date — see [docs/design/MIRAGE-DESIGN.md]({{ site.baseurl }}/design/MIRAGE-DESIGN.html)
+Version 1.0 is defined by exit criteria, not a date — see
+[docs/design/MIRAGE-DESIGN.md]({{ site.baseurl }}/design/MIRAGE-DESIGN.html)
 section 12. Watch [CHANGELOG.md](https://github.com/namandhakad712/Mirage/blob/main/CHANGELOG.md) for progress.
 
 ## License
