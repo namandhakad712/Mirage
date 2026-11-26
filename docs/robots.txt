@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://namandhakad712.github.io/Mirage/sitemap.xml

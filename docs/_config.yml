@@ -3,8 +3,9 @@
 # Source: docs/ (the same directory that holds the repository's markdown).
 # Built by .github/workflows/pages.yml with github/jekyll-build-pages —
 # the same Jekyll (3.10.x) and plugin set GitHub Pages runs natively, so a
-# green local/CI build is a green deploy. No plugins, no remote themes:
-# every layout, include and style lives in this repository.
+# green local/CI build is a green deploy. One allowlisted plugin
+# (jekyll-sitemap, see below), no remote themes: every layout, include and
+# style lives in this repository.
 
 title: Mirage
 tagline: Deception-layer defense against AI-driven attack agents
@@ -15,6 +16,13 @@ description: >-
 
 url: "https://namandhakad712.github.io"
 baseurl: "/Mirage"
+
+# jekyll-sitemap is in the github-pages plugin allowlist and ships inside
+# the image jekyll-build-pages runs (github-pages 232 → jekyll-sitemap
+# 1.4.0), so listing it here enables /sitemap.xml without adding a
+# Gemfile or any extra gem. robots.txt points at the generated sitemap.
+plugins:
+  - jekyll-sitemap
 
 markdown: kramdown
 kramdown:
@@ -28,8 +36,8 @@ kramdown:
     block:
       line_numbers: false
 
-# No theme, no plugins: _layouts/ + _includes/ + assets/ are the design
-# system. tools/check_site.py validates that every page, layout reference,
-# navigation entry and machine manifest (llms.txt, docs.json) stays
-# consistent; tools/sync_site_docs.py keeps the spec/ and data/ mirrors
-# under docs/ fresh from their normative sources.
+# No theme, one allowlisted plugin (jekyll-sitemap): _layouts/ + _includes/
+# + assets/ are the design system. tools/check_site.py validates that every
+# page, layout reference, navigation entry and machine manifest (llms.txt,
+# docs.json) stays consistent; tools/sync_site_docs.py keeps the spec/ and
+# data/ mirrors under docs/ fresh from their normative sources.
