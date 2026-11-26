@@ -1,0 +1,30 @@
+{% comment %} Search dialog: mounted once by the default layout on every page.
+Behavior lives in assets/js/search.js; styling in assets/css/search.css.
+The trigger button is in header.html (.site-actions). data-baseurl and
+data-search-src are read by search.js; hidden until opened, so there is
+no layout shift. {% endcomment %}
+<div class="search-overlay" id="search-overlay" hidden
+     data-baseurl="{{ site.baseurl }}"
+     data-search-src="{{ site.baseurl }}/search.json">
+  <div class="search-dialog" id="search-dialog" role="dialog" aria-modal="true"
+       aria-labelledby="search-input">
+    <div class="search-bar">
+      <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16"
+           aria-hidden="true" focusable="false">
+        <circle cx="10.8" cy="10.8" r="6.4" fill="none" stroke="currentColor" stroke-width="1.7"/>
+        <path d="M15.6 15.6 21 21" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      </svg>
+      <input class="search-input" id="search-input" type="text" autocomplete="off"
+             spellcheck="false" role="combobox" aria-expanded="false"
+             aria-controls="search-results" aria-autocomplete="list"
+             aria-label="Search documentation">
+      <span class="search-key" aria-hidden="true">Ctrl K</span>
+      <button class="search-close" id="search-close" type="button"
+              aria-label="Close search (Escape)">Esc</button>
+    </div>
+    <ul class="search-results" id="search-results" role="listbox"
+        aria-label="Search results"></ul>
+    <p class="search-status" id="search-status" role="status" aria-live="polite">Type to search the documentation.</p>
+  </div>
+</div>
+<script src="{{ site.baseurl }}/assets/js/search.js" defer></script>
