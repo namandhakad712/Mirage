@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480" role="img" aria-labelledby="mrg-vd-title mrg-vd-desc" style="width:100%;max-width:720px;height:auto;display:block;margin:4px auto 20px;font-family:var(--font-mono, ui-monospace, Menlo, Consolas, monospace)">
+  <title id="mrg-vd-title">The Mirage verdict ladder: observe, tag, decoy_route, throttle and ban with their exact thresholds.</title>
+  <desc id="mrg-vd-desc">Vertical ladder figure, escalation upward. tag holds at request_score 15 or session cumulative 25; decoy_route at request_score 25 with a high-class signal and a decoyable route; throttle at request_score 40; ban on honeytoken_use, or decoy_lead_follow on a route that is not protected, or request_score 60 with a high-class signal. Protected routes cap the verdict at tag, except honeytoken_use which still bans; session history alone never escalates past tag.</desc>
+  <defs>
+    <marker id="mrg-vd-arrow" viewBox="0 0 8 8" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M1 1.2 L7 4 L1 6.8 Z" fill="currentColor"/>
+    </marker>
+  </defs>
+  <style>
+    .mrg-vd-frame { fill: none; stroke: var(--border, #1e2a40); stroke-width: 1; }
+    .mrg-vd-plate { font-size: 12px; letter-spacing: 0.06em; fill: var(--faint, #5f7089); }
+    .mrg-vd-rung { font-size: 13.5px; font-weight: 700; letter-spacing: 0.04em; }
+    .mrg-vd-cond { font-size: 12.5px; fill: var(--muted, #8fa0b8); }
+    .mrg-vd-num { fill: var(--text-strong, #f2f6fc); font-weight: 600; }
+    .mrg-vd-note { font-size: 12px; fill: var(--amber, #f0b45c); }
+    .mrg-vd-spine { stroke: var(--border-strong, #2b3a57); stroke-width: 1.5; fill: none; }
+    .mrg-vd-rline { stroke: var(--border-strong, #2b3a57); stroke-width: 1.25; }
+    .mrg-vd-banline { stroke: var(--accent, #45d6c4); stroke-width: 1.75; }
+    .mrg-vd-rule { stroke: var(--border, #1e2a40); stroke-width: 1; }
+    .mrg-vd-mark { fill: var(--bg, #0a0f1a); stroke-width: 1.25; }
+    .mrg-vd-mark-ban { fill: var(--accent, #45d6c4); stroke: var(--accent-strong, #6ff0dd); stroke-width: 1; }
+    .mrg-vd-tick { fill: var(--amber, #f0b45c); }
+    .mrg-vd-l-observe { fill: var(--verdict-pass, #55c98a); }
+    .mrg-vd-l-tag { fill: var(--verdict-tag, #e3c95d); }
+    .mrg-vd-l-decoy { fill: var(--verdict-decoy, #45d6c4); }
+    .mrg-vd-l-throttle { fill: var(--verdict-throttle, #ef9f5a); }
+    .mrg-vd-l-ban { fill: var(--verdict-ban, #f07d7d); }
+    .mrg-vd-c-observe { stroke: var(--verdict-pass, #55c98a); }
+    .mrg-vd-c-tag { stroke: var(--verdict-tag, #e3c95d); }
+    .mrg-vd-c-decoy { stroke: var(--verdict-decoy, #45d6c4); }
+    .mrg-vd-c-throttle { stroke: var(--verdict-throttle, #ef9f5a); }
+  </style>
+  <rect class="mrg-vd-frame" x="0.5" y="0.5" width="719" height="479" rx="8"/>
+  <text class="mrg-vd-plate" x="16" y="24">VERDICT LADDER — THE HIGHEST RUNG WHOSE CONDITION HOLDS</text>
+  <text class="mrg-vd-plate" x="704" y="24" text-anchor="end">SIGNALS 1.1.0 · §5</text>
+  <line class="mrg-vd-rule" x1="16" y1="36" x2="704" y2="36"/>
+  <path class="mrg-vd-spine" d="M 150 406 L 150 52" marker-end="url(#mrg-vd-arrow)"/>
+  <line class="mrg-vd-spine" x1="143" y1="406" x2="157" y2="406"/>
+  <line class="mrg-vd-banline" x1="150" y1="66" x2="696" y2="66"/>
+  <line class="mrg-vd-rline" x1="150" y1="146" x2="696" y2="146"/>
+  <line class="mrg-vd-rline" x1="150" y1="226" x2="696" y2="226"/>
+  <line class="mrg-vd-rline" x1="150" y1="306" x2="696" y2="306"/>
+  <line class="mrg-vd-rline" x1="150" y1="386" x2="696" y2="386"/>
+  <circle class="mrg-vd-mark-ban" cx="150" cy="66" r="5"/>
+  <circle class="mrg-vd-mark mrg-vd-c-throttle" cx="150" cy="146" r="4.5"/>
+  <circle class="mrg-vd-mark mrg-vd-c-decoy" cx="150" cy="226" r="4.5"/>
+  <circle class="mrg-vd-mark mrg-vd-c-tag" cx="150" cy="306" r="4.5"/>
+  <circle class="mrg-vd-mark mrg-vd-c-observe" cx="150" cy="386" r="4.5"/>
+  <text class="mrg-vd-rung mrg-vd-l-ban" x="138" y="70" text-anchor="end">ban</text>
+  <text class="mrg-vd-rung mrg-vd-l-throttle" x="138" y="150" text-anchor="end">throttle</text>
+  <text class="mrg-vd-rung mrg-vd-l-decoy" x="138" y="230" text-anchor="end">decoy_route</text>
+  <text class="mrg-vd-rung mrg-vd-l-tag" x="138" y="310" text-anchor="end">tag</text>
+  <text class="mrg-vd-rung mrg-vd-l-observe" x="138" y="390" text-anchor="end">observe</text>
+  <text class="mrg-vd-cond" x="170" y="60"><tspan class="mrg-vd-num">honeytoken_use</tspan> OR (<tspan class="mrg-vd-num">decoy_lead_follow</tspan> AND route not protected)</text>
+  <text class="mrg-vd-cond" x="170" y="78">OR (request_score ≥ <tspan class="mrg-vd-num">60</tspan> AND a high-class signal)</text>
+  <text class="mrg-vd-cond" x="170" y="150">request_score ≥ <tspan class="mrg-vd-num">40</tspan></text>
+  <text class="mrg-vd-cond" x="170" y="230">request_score ≥ <tspan class="mrg-vd-num">25</tspan> AND a high-class signal AND route decoyable</text>
+  <text class="mrg-vd-cond" x="170" y="310">request_score ≥ <tspan class="mrg-vd-num">15</tspan> OR session cumulative ≥ <tspan class="mrg-vd-num">25</tspan></text>
+  <text class="mrg-vd-cond" x="170" y="390">no rung below holds</text>
+  <line class="mrg-vd-rule" x1="16" y1="434" x2="704" y2="434"/>
+  <rect class="mrg-vd-tick" x="16" y="445" width="4" height="4"/>
+  <text class="mrg-vd-note" x="27" y="452">protected routes cap at tag — except honeytoken_use, which still bans (I4)</text>
+  <rect class="mrg-vd-tick" x="16" y="463" width="4" height="4"/>
+  <text class="mrg-vd-note" x="27" y="470">session history never escalates past tag — a high cum_before can only tag</text>
+</svg>
