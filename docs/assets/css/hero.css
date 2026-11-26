@@ -1,0 +1,221 @@
+/* ============================================================================
+   Mirage landing hero + landing-specific components.
+   ----------------------------------------------------------------------------
+   Loaded on every page by _includes/head.html, but every rule here is scoped
+   to classes that only the landing page (index.md) uses. The .hero* rules
+   below moved over from main.css section 7 and were reshaped here; main.css
+   keeps what other pages share (.btn, .section*, .step, .feature, …).
+   Tokens only — no raw hex, so both themes hold by construction.
+   ========================================================================== */
+
+/* ---------- Hero shell ---------- */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end; /* editorial: content anchored bottom-left */
+  min-height: min(86vh, 44rem); /* the canvas never sizes the hero */
+  border-bottom: 1px solid var(--border);
+  background:
+    radial-gradient(52rem 30rem at 12% -8%, var(--accent-soft), transparent 60%),
+    radial-gradient(40rem 26rem at 95% 8%, var(--amber-soft), transparent 55%),
+    var(--bg);
+}
+
+/* Blueprint grid (moved verbatim from main.css). */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 44px 44px;
+  opacity: 0.35;
+  mask-image: radial-gradient(38rem 26rem at 30% 0%, #000 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(38rem 26rem at 30% 0%, #000 30%, transparent 75%);
+}
+
+/* WebGL canvas, inserted by hero.js as the hero's first child. */
+.hero-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+/* Functional bottom scrim: contrast engineering under the hero copy. */
+.hero-scrim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 46%;
+  z-index: 1;
+  background: linear-gradient(to top, var(--bg), transparent);
+  pointer-events: none;
+}
+
+/* Static diamond watermark: shown only when WebGL is off or lost. */
+.hero-mark { display: none; }
+.hero-no-webgl .hero-mark {
+  display: block;
+  position: absolute;
+  top: 14%;
+  right: clamp(24px, 10vw, 9rem);
+  width: min(34vmin, 21rem);
+  aspect-ratio: 1;
+  z-index: 0;
+}
+.hero-no-webgl .hero-mark::before,
+.hero-no-webgl .hero-mark::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--accent-line);
+  transform: rotate(45deg);
+}
+.hero-no-webgl .hero-mark::before { opacity: 0.5; }
+.hero-no-webgl .hero-mark::after {
+  /* the inner diamond of the layered mark, at ~55% scale */
+  inset: 22%;
+  background: var(--accent-soft);
+  opacity: 0.8;
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 120px 24px 88px;
+}
+
+.hero-eyebrow {
+  margin: 0 0 20px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+}
+
+.hero-title {
+  margin: 0 0 18px;
+  max-width: 21ch;
+  font-size: clamp(2.6rem, 7vw, 4.6rem);
+  line-height: 1.04;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-strong);
+}
+.hero-title em { font-style: italic; color: var(--accent); }
+
+.hero-lede {
+  margin: 0 0 30px;
+  max-width: 58ch;
+  font-size: clamp(16px, 2.2vw, 18.5px);
+  color: var(--muted);
+}
+
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 30px; }
+
+/* Hairline ghost on the landing page: no raised surface, just the line. */
+.hero-actions .btn-ghost { background: transparent; }
+
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--faint);
+}
+.hero-meta span { display: inline-flex; align-items: center; gap: 7px; }
+.hero-meta .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex: none; }
+
+/* ---------- Spec strip ---------- */
+
+.spec-strip {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-raise);
+}
+.spec-strip-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 13px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+}
+.spec-strip-inner span { white-space: nowrap; }
+.spec-strip-inner span + span::before {
+  content: "·";
+  margin: 0 14px;
+  color: var(--border-strong);
+}
+
+/* ---------- The four contracts ---------- */
+
+.contracts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.contract {
+  padding: 22px 22px 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.contract-num {
+  margin: 0 0 14px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+}
+.contract-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 650;
+  color: var(--text-strong);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.contract .inv {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--accent);
+  border: 1px solid var(--accent-line);
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+}
+.contract p { margin: 0; font-size: 13.8px; line-height: 1.6; color: var(--muted); }
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 980px) {
+  .contracts { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 880px) {
+  .hero { min-height: min(78vh, 40rem); }
+  .hero-inner { padding: 88px 20px 60px; }
+  .spec-strip-inner { padding: 12px 20px; }
+}
+
+@media (max-width: 640px) {
+  .contracts { grid-template-columns: 1fr; }
+  .hero-no-webgl .hero-mark { top: 9%; width: min(44vmin, 15rem); }
+}
