@@ -1,0 +1,34 @@
+{
+  "spec_version": "1.1.0",
+  "decoy_catalog_version": "1",
+  "sessions": [
+    "fec52565aa0cf18f57d7cf5b3ac72850",
+    "8959edf6884f2c2e223a9319e83a6982"
+  ],
+  "entries": {
+    "admin-panel-legacy": {
+      "8959edf6884f2c2e223a9319e83a6982": "\u003c!DOCTYPE html\u003e\n\u003chtml lang=\"en\"\u003e\n\u003chead\u003e\n  \u003cmeta charset=\"utf-8\"\u003e\n  \u003ctitle\u003eAdmin Login\u003c/title\u003e\n  \u003clink rel=\"stylesheet\" href=\"/admin/assets/style.css\"\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n  \u003ch1\u003eAdmin Login\u003c/h1\u003e\n  \u003cform method=\"post\" action=\"/admin/login/verify\"\u003e\n    \u003clabel\u003eUsername \u003cinput type=\"text\" name=\"username\" autocomplete=\"off\"\u003e\u003c/label\u003e\n    \u003clabel\u003ePassword \u003cinput type=\"password\" name=\"password\"\u003e\u003c/label\u003e\n    \u003cbutton type=\"submit\"\u003eSign in\u003c/button\u003e\n  \u003c/form\u003e\n  \u003chr\u003e\n  \u003cp\u003eForgot password? Contact the site administrator.\u003c/p\u003e\n\u003c/body\u003e\n\u003c/html\u003e\n",
+      "fec52565aa0cf18f57d7cf5b3ac72850": "\u003c!DOCTYPE html\u003e\n\u003chtml lang=\"en\"\u003e\n\u003chead\u003e\n  \u003cmeta charset=\"utf-8\"\u003e\n  \u003ctitle\u003eAdmin Login\u003c/title\u003e\n  \u003clink rel=\"stylesheet\" href=\"/admin/assets/style.css\"\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n  \u003ch1\u003eAdmin Login\u003c/h1\u003e\n  \u003cform method=\"post\" action=\"/admin/login/verify\"\u003e\n    \u003clabel\u003eUsername \u003cinput type=\"text\" name=\"username\" autocomplete=\"off\"\u003e\u003c/label\u003e\n    \u003clabel\u003ePassword \u003cinput type=\"password\" name=\"password\"\u003e\u003c/label\u003e\n    \u003cbutton type=\"submit\"\u003eSign in\u003c/button\u003e\n  \u003c/form\u003e\n  \u003chr\u003e\n  \u003cp\u003eForgot password? Contact the site administrator.\u003c/p\u003e\n\u003c/body\u003e\n\u003c/html\u003e\n"
+    },
+    "api-docs-dev": {
+      "8959edf6884f2c2e223a9319e83a6982": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": { \"title\": \"internal-api\", \"version\": \"0.9.3-dev\" },\n  \"paths\": {\n    \"/v1/ping\": { \"get\": { \"summary\": \"health probe\" } },\n    \"/v1/orders\": { \"get\": { \"summary\": \"list orders\" } },\n    \"/v1/admin/tokens\": { \"post\": { \"summary\": \"issue API token\" } }\n  }\n}\n",
+      "fec52565aa0cf18f57d7cf5b3ac72850": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": { \"title\": \"internal-api\", \"version\": \"0.9.3-dev\" },\n  \"paths\": {\n    \"/v1/ping\": { \"get\": { \"summary\": \"health probe\" } },\n    \"/v1/orders\": { \"get\": { \"summary\": \"list orders\" } },\n    \"/v1/admin/tokens\": { \"post\": { \"summary\": \"issue API token\" } }\n  }\n}\n"
+    },
+    "debug-endpoint-legacy": {
+      "8959edf6884f2c2e223a9319e83a6982": "{\n  \"app\": \"legacy-shop\",\n  \"debug\": true,\n  \"php_version\": \"7.4.33\",\n  \"session_save_path\": \"/tmp\",\n  \"opcache_enabled\": false,\n  \"last_error\": {\n    \"file\": \"/home/legacyshop/public_html/includes/db.php\",\n    \"line\": 142,\n    \"message\": \"connection refused (db.legacy.test:5432)\"\n  }\n}\n",
+      "fec52565aa0cf18f57d7cf5b3ac72850": "{\n  \"app\": \"legacy-shop\",\n  \"debug\": true,\n  \"php_version\": \"7.4.33\",\n  \"session_save_path\": \"/tmp\",\n  \"opcache_enabled\": false,\n  \"last_error\": {\n    \"file\": \"/home/legacyshop/public_html/includes/db.php\",\n    \"line\": 142,\n    \"message\": \"connection refused (db.legacy.test:5432)\"\n  }\n}\n"
+    },
+    "env-file-staging": {
+      "8959edf6884f2c2e223a9319e83a6982": "APP_NAME=staging\nAPP_ENV=staging\nAPP_KEY=base64:mvKMgp0Oq5K31TeTv4RhW+kqnHXuSgjP1jJ6HWdaxiuU\nAPP_DEBUG=true\nAPP_URL=https://staging.example.com\n\nDB_CONNECTION=pgsql\nDATABASE_URL=postgres://deploy:mrg_live_2dba9aa7af193d97cf00f64b@db.test:5432/staging\nDB_USERNAME=deploy\nDB_PASSWORD=mrg_live_2dba9aa7af193d97cf00f64b\n\nMAIL_MAILER=smtp\nMAIL_HOST=mail.test\nMAIL_PORT=1025\n\nAWS_ACCESS_KEY_ID=AKIAMRG2R31945152A81\nAWS_BUCKET=staging-uploads\n",
+      "fec52565aa0cf18f57d7cf5b3ac72850": "APP_NAME=staging\nAPP_ENV=staging\nAPP_KEY=base64:kpETMKCBV00BxQ7t3Rq43Bv3g7z1OWFR4Wfii2e4n9gz\nAPP_DEBUG=true\nAPP_URL=https://staging.example.com\n\nDB_CONNECTION=pgsql\nDATABASE_URL=postgres://deploy:mrg_live_ad9a6361d5070669dbdd41ad@db.test:5432/staging\nDB_USERNAME=deploy\nDB_PASSWORD=mrg_live_ad9a6361d5070669dbdd41ad\n\nMAIL_MAILER=smtp\nMAIL_HOST=mail.test\nMAIL_PORT=1025\n\nAWS_ACCESS_KEY_ID=AKIAMRG2KVLWP4GF9WG5\nAWS_BUCKET=staging-uploads\n"
+    },
+    "git-config-staging": {
+      "8959edf6884f2c2e223a9319e83a6982": "[core]\n    repositoryformatversion = 0\n    filemode = true\n    bare = false\n    logallrefupdates = true\n[remote \"origin\"]\n    url = https://git.test/staging/app.git\n    fetch = +refs/heads/*:refs/remotes/origin/*\n[branch \"main\"]\n    remote = origin\n    merge = refs/heads/main\n",
+      "fec52565aa0cf18f57d7cf5b3ac72850": "[core]\n    repositoryformatversion = 0\n    filemode = true\n    bare = false\n    logallrefupdates = true\n[remote \"origin\"]\n    url = https://git.test/staging/app.git\n    fetch = +refs/heads/*:refs/remotes/origin/*\n[branch \"main\"]\n    remote = origin\n    merge = refs/heads/main\n"
+    },
+    "source-map-dev": {
+      "8959edf6884f2c2e223a9319e83a6982": "{\n  \"version\": 3,\n  \"file\": \"app.js\",\n  \"sources\": [\n    \"webpack:///src/index.js\",\n    \"webpack:///src/admin.js\",\n    \"webpack:///src/secrets.js\"\n  ],\n  \"sourcesContent\": [null, null, null]\n}\n",
+      "fec52565aa0cf18f57d7cf5b3ac72850": "{\n  \"version\": 3,\n  \"file\": \"app.js\",\n  \"sources\": [\n    \"webpack:///src/index.js\",\n    \"webpack:///src/admin.js\",\n    \"webpack:///src/secrets.js\"\n  ],\n  \"sourcesContent\": [null, null, null]\n}\n"
+    }
+  }
+}

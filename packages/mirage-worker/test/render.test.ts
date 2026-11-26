@@ -43,8 +43,9 @@ describe("renderDecoy", () => {
     expect(body).toContain("APP_NAME=staging");
     // {{SEED:44_B64}} -> 44 base64 characters.
     expect(body).toMatch(/^APP_KEY=base64:[A-Za-z0-9+/]{44}$/m);
-    // {{SEED:13_UPPER}} -> 13 uppercase letters after the fixed prefix.
-    expect(body).toMatch(/^AWS_ACCESS_KEY_ID=AKIAMRG[A-Z]{13}$/m);
+    // {{SEED:13_UPPER}} -> 13 uppercase ALNUM chars ([A-Z0-9], the 36-char
+    // alphabet pinned by DECOY-CATALOG §4) after the fixed prefix.
+    expect(body).toMatch(/^AWS_ACCESS_KEY_ID=AKIAMRG[A-Z0-9]{13}$/m);
   });
 
   it("mints the honeytoken with the engine formula (v05 golden token)", () => {

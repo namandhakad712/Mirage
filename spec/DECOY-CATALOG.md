@@ -73,9 +73,18 @@ worker):
 ## 4. Placeholders and seeding
 
 Placeholders are resolved per session deterministically from
-`sha256(session_key + entry_id + placeholder_id)`:
+`sha256(session_key + ":" + entry_id + ":seed:" + spec + ":" + k)` where
+`k` is the 0-based occurrence index of **that spec string** in the body —
+two identical `{{SEED:…}}` placeholders in one body never render the same
+value, while the derivation stays byte-identical across the Go and
+TypeScript implementations. The formula is pinned byte-for-byte by
+`spec/golden-vectors/renders.json` (rendered body of every entry for two
+fixed session keys); both engines must reproduce it exactly.
 
-- `{{SEED:N_HEX}}` — N hex chars. `{{SEED:44_B64}}` — 44-char base64 blob.
+- `{{SEED:N_HEX}}` — first N hex chars of the digest (N ≤ 64).
+  `{{SEED:N_B64}}` — N unpadded standard-base64 chars (N must be a
+  multiple of 4, derived from the first 3N/4 digest bytes).
+  `{{SEED:N_UPPER}}` — first N digest bytes folded mod 36 over A-Z0-9.
 - `{{TOKEN:id}}` — mint a honeytoken from `data/token-formats.md`, unique
   per (session, entry, id). Later use of the exact string anywhere Mirage
   can see fires `honeytoken_use` (SIG-104) and proves which decoy leaked.

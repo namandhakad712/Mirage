@@ -7,7 +7,7 @@
 // noindex header set exactly once (I12). The v1 catalog bodies contain no
 // timestamp placeholders, so renderDecoy takes no ts argument.
 
-import { sha256Bytes } from "./sha256";
+import { sha256Bytes, sha256Hex } from "./sha256";
 import { mintHoneytoken } from "./engine";
 import type { CatalogEntry, CatalogPersona } from "./generated/data";
 
@@ -21,7 +21,9 @@ export interface RenderedDecoy {
 const NOINDEX_HEADER: [string, string] = ["X-Robots-Tag", "noindex, nofollow, noarchive"];
 const TRUNCATION_SUFFIX = "\n[truncated]";
 const BASE64_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-const UPPER_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+// Must match the Go renderer's 36-char alphabet exactly (render parity is
+// pinned by spec/golden-vectors/renders.json).
+const UPPER_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 // {{SEED:N_HEX}}, {{SEED:N_B64}}, {{SEED:N_UPPER}}, {{TOKEN:id}}.
 const PLACEHOLDER_RE = /\{\{(SEED:\d+_(?:HEX|B64|UPPER)|TOKEN:[^{}]+)\}\}/g;
 const SEED_SPEC_RE = /^(\d+)_(HEX|B64|UPPER)$/;
@@ -54,31 +56,62 @@ function charsFromBytes(bytes: Uint8Array, alphabet: string, count: number): str
   return s;
 }
 
-function seedValue(sessionKey: string, entryId: string, spec: string): string {
+/** Standard base64 of raw bytes, unpadded — byte-identical to Go's
+ * base64.StdEncoding.EncodeToString(... ) with padding stripped. */
+function b64EncodeUnpadded(bytes: Uint8Array): string {
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 3) {
+    const b0 = bytes[i] ?? 0;
+    const b1 = bytes[i + 1];
+    const b2 = bytes[i + 2];
+    s += BASE64_ALPHABET.charAt(b0 >> 2);
+    s += BASE64_ALPHABET.charAt(((b0 & 0x03) << 4) | ((b1 ?? 0) >> 4));
+    if (b1 === undefined) return s;
+    s += BASE64_ALPHABET.charAt(((b1 & 0x0f) << 2) | ((b2 ?? 0) >> 6));
+    if (b2 === undefined) return s;
+    s += BASE64_ALPHABET.charAt(b2 & 0x3f);
+  }
+  return s;
+}
+
+/**
+ * One {{SEED:spec}} value. Material is
+ * `${sessionKey}:${entryId}:seed:${spec}:${k}` where k is the k-th
+ * occurrence of THIS spec in the body — the cross-engine canon (see
+ * DECOY-CATALOG.md section 4 and spec/golden-vectors/renders.json).
+ *   HEX(N)   first N hex chars of sha256(material)
+ *   B64(N)   unpadded standard base64 of the first 3N/4 digest-stream
+ *            bytes (N must be a multiple of 4)
+ *   UPPER(N) first N digest-stream bytes folded mod 36 over A-Z0-9
+ */
+function seedValue(sessionKey: string, entryId: string, spec: string, k: number): string {
   const match = SEED_SPEC_RE.exec(spec);
   if (match === null) throw new Error(`unknown SEED placeholder spec: ${spec}`);
   const count = Number(match[1]);
   if (count <= 0 || count > MAX_SEED_CHARS) throw new Error(`SEED placeholder out of range: ${spec}`);
   const mode = match[2];
-  const material = `${sessionKey}:${entryId}:${spec}`;
+  const material = `${sessionKey}:${entryId}:seed:${spec}:${k}`;
   if (mode === "HEX") {
-    // One byte yields two hex chars.
-    const bytes = digestStreamBytes(material, Math.ceil(count / 2));
-    let s = "";
-    for (let i = 0; i < bytes.length && s.length < count; i++) {
-      const b = bytes[i] ?? 0;
-      s += b.toString(16).padStart(2, "0");
-    }
-    return s.slice(0, count);
+    if (count > 64) throw new Error(`SEED placeholder out of range: ${spec}`);
+    return sha256Hex(material).slice(0, count);
   }
-  const bytes = digestStreamBytes(material, count);
-  return charsFromBytes(bytes, mode === "B64" ? BASE64_ALPHABET : UPPER_ALPHABET, count);
+  if (mode === "B64") {
+    if (count % 4 !== 0) throw new Error(`SEED B64 length must be a multiple of 4: ${spec}`);
+    return b64EncodeUnpadded(digestStreamBytes(material, (count / 4) * 3));
+  }
+  return charsFromBytes(digestStreamBytes(material, count), UPPER_ALPHABET, count);
 }
 
 /** Resolve every {{SEED:…}} / {{TOKEN:…}} placeholder in a template body. */
 function applyPlaceholders(body: string, entryId: string, sessionKey: string): string {
+  const seen = new Map<string, number>();
   return body.replace(PLACEHOLDER_RE, (_match: string, spec: string): string => {
-    if (spec.startsWith("SEED:")) return seedValue(sessionKey, entryId, spec.slice("SEED:".length));
+    if (spec.startsWith("SEED:")) {
+      const inner = spec.slice("SEED:".length);
+      const k = seen.get(inner) ?? 0;
+      seen.set(inner, k + 1);
+      return seedValue(sessionKey, entryId, inner, k);
+    }
     // {{TOKEN:id}} — the exact string the engine registers on serving, so
     // SIG-104 detection matches what the attacker read in the body.
     return mintHoneytoken(sessionKey, entryId, spec.slice("TOKEN:".length));

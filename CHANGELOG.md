@@ -6,7 +6,72 @@ All notable changes to Mirage are documented here. Format follows
 
 ## [Unreleased]
 
-### Added — 2026-11-26 (specification round)
+### Fixed — 2026-11-26 (render-parity round)
+
+- `{{SEED:*}}` derivation is now per-spec-string occurrence-counted:
+  the material is `sha256(session_key + ":" + entry_id + ":seed:" +
+  spec + ":" + k)` where `k` is the k-th occurrence of that spec in the
+  body, so two identical placeholders never collide while the formula
+  stays identical across engines. Pinned byte-for-byte by the new
+  cross-engine fixture `spec/golden-vectors/renders.json` (every catalog
+  entry rendered for two fixed sessions), consumed by BOTH the Go suite
+  (`internal/decoy/render_golden_test.go`) and the worker suite
+  (`packages/mirage-worker/test/render.golden.test.ts`); CI fails on any
+  divergence.
+- `{{SEED:N_UPPER}}` alphabet is 36 chars (A-Z0-9) in both engines —
+  the TypeScript renderer previously used 26 letters and produced
+  different bytes from Go for the same session (caught by the golden
+  fixture, fixed before release).
+- `{{SEED:N_HEX}}` now slices the digest directly (N ≤ 64) and
+  `{{SEED:N_B64}}` is unpadded standard base64 derived from 3N/4 digest
+  bytes (N must be a multiple of 4), matching Go exactly.
+- Spec canon updated: `spec/DECOY-CATALOG.md` §4 now states the exact
+  seed material, the three SEED formats and the golden-fixture pin.
+
+### Added — 2026-11-26 (engine round)
+
+- Decision engine (`internal/detect`): SIGNALS v1.1.0 in code — all 11
+  signals, the verdict ladder with the protected-route cap and the
+  honeytoken exception, the three gating rules, session state and
+  expiry. Golden-vector suite replays all 20 cases / 68 requests with
+  20/20 case and 68/68 request parity against the hand-computed
+  expectations.
+- Decoy data layer (`internal/decoy`): strict catalog loader with
+  reserved-value validation, deterministic renderer (seeded
+  placeholders, honeytoken minting, noindex set, size cap with UTF-8
+  boundary), and the pollution suite (secret-scanner patterns,
+  no-real-domain and inert-body checks over the rendered catalog).
+- Cloudflare Worker port (`packages/mirage-worker`): zero-runtime-dep
+  TypeScript engine (synchronous sha256), fail-open handler honoring
+  the adapter protocol (hard deadline, reserved decision), built-in
+  data generated from the shared spec files, vitest suite with full
+  golden-vector parity.
+
+### Added — 2026-11-26 (core round)
+
+- Go module `github.com/mirage-shield/mirage` and `internal/model`: the
+  shared decision types, fail-open semantics, session key
+  `sha256(ip)[:32]`, the right-to-left trusted-proxy client-IP walk with
+  malformed-hop skipping and peer fallback, never-scored / never-banned
+  ranges (loopback, RFC 1918, CGNAT, link-local, TEST-NET), and the
+  reason-text sanitizer.
+- `internal/config`: strict YAML loading with fail-closed unknown-key
+  rejection, all policy thresholds and protected routes, loopback
+  dashboard token requirement, mode validation (look | tripwires |
+  protect).
+- `internal/store`: SQLite (WAL) and in-memory session stores behind one
+  interface, versioned schema with safe migration, session state with
+  30-minute expiry reset.
+- `internal/events`: bounded drop-oldest event queue with a drainable
+  snapshot for the dashboard.
+- `internal/enforce`: verdict gatekeeper — tag always allowed, throttle
+  and ban gated behind the kill switch and per-verdict budgets; budgets
+  never fail-open a hard verdict's proof chain (honeytoken_use).
+- `internal/connectors`: denyfile (source-suffix lines), webhook with
+  HMAC-SHA256 signing and replay guard, CrowdSec LAPI decision pull,
+  Cloudflare firewall-rule adapter, all behind one retry envelope
+  (bounded attempts, exponential backoff with jitter, 429 Retry-After
+  honored); every connector is fail-open by design and tested to be.
 
 - Normative signal specification v1.1.0 (`spec/SIGNALS.md`): 11 signals
   with fixed weights, classes and reason codes; the verdict ladder

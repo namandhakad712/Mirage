@@ -77,21 +77,25 @@ func (c *Catalog) Render(entry Entry, sessionKey string) (Rendered, error) {
 
 // renderBody resolves every placeholder in entry.Body:
 //
-//   - {{SEED:spec}} — session-seeded material; the Nth SEED occurrence in
-//     the body gets occurrence index N, so two SEED placeholders in one
-//     body never render the same value.
+//   - {{SEED:spec}} — session-seeded material. The material string is
+//     sessionKey:entryId:seed:spec:k where k is the k-th occurrence of THAT
+//     spec string in the body (0-based), so two identical SEED placeholders
+//     in one body never render the same value while the derivation stays
+//     identical across the Go and TypeScript implementations (the
+//     cross-engine formula is pinned by spec/golden-vectors/renders.json).
 //   - {{TOKEN:id}} — a honeytoken; the same id always mints the same value
 //     so DATABASE_URL and DB_PASSWORD agree within a body.
 func renderBody(entry Entry, sessionKey string) (string, error) {
-	seedIndex := 0
+	counts := map[string]int{}
 	var firstErr error
 	out := placeholderRe.ReplaceAllStringFunc(entry.Body, func(m string) string {
 		inner := strings.TrimSuffix(strings.TrimPrefix(m, "{{"), "}}")
 		kind, arg, _ := strings.Cut(inner, ":")
 		switch kind {
 		case "SEED":
-			material := sessionKey + ":" + entry.ID + ":seed:" + strconv.Itoa(seedIndex)
-			seedIndex++
+			k := counts[arg]
+			counts[arg]++
+			material := sessionKey + ":" + entry.ID + ":seed:" + arg + ":" + strconv.Itoa(k)
 			s, err := renderSeed(material, arg)
 			if err != nil && firstErr == nil {
 				firstErr = fmt.Errorf("entry %q: %v", entry.ID, err)
