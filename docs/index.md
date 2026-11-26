@@ -7,19 +7,20 @@ order: 0
 ---
 
 <div class="hero">
+  <div class="hero-scrim" aria-hidden="true"></div>
+  <div class="hero-mark" aria-hidden="true"></div>
   <div class="hero-inner">
-    <p class="hero-eyebrow">spec 1.1.0 · adapter protocol 1 · AGPL-3.0</p>
-    <h1 class="hero-title">Bait the machines. <em>Protect the humans.</em></h1>
+    <p class="hero-eyebrow">Deception layer · Signal spec 1.1.0</p>
+    <h1 class="hero-title">Bait the machines. Protect the <em>humans</em>.</h1>
     <p class="hero-lede">
-      Mirage is an open-source deception layer for your origin: every request is
-      scored by eleven deterministic signals, attackers are quietly routed into
-      decoy personas, and the whole system fails open — a broken Mirage never
-      breaks your site.
+      Mirage is an open-source deception layer for your origin: every request
+      is scored by eleven deterministic signals, attackers are quietly routed
+      into decoy personas, and the whole system fails open — a broken Mirage
+      never breaks your site.
     </p>
     <div class="hero-actions">
       <a class="btn btn-primary" href="{{ site.baseurl }}/guide/getting-started.html">Get started</a>
       <a class="btn btn-ghost" href="{{ site.baseurl }}/spec/SIGNALS.html">Read the spec</a>
-      <a class="btn btn-ghost" href="{{ site.baseurl }}/agent/">For AI agents</a>
     </div>
     <div class="hero-meta">
       <span><span class="dot"></span>Go core</span>
@@ -29,6 +30,48 @@ order: 0
     </div>
   </div>
 </div>
+
+<div class="spec-strip">
+  <div class="spec-strip-inner">
+    <span>SIGNALS v1.1.0</span>
+    <span>ADAPTER-PROTOCOL v1</span>
+    <span>DECOY-CATALOG v1</span>
+    <span>20 golden vectors</span>
+    <span>AGPL-3.0</span>
+  </div>
+</div>
+
+<section class="section">
+  <div class="section-inner">
+    <div class="section-head">
+      <p class="section-kicker">Design contracts</p>
+      <h2 class="section-title">The four contracts</h2>
+      <p class="section-lede">Fifteen invariants bind every line of the code; these four are the ones an owner, a visitor and an auditor meet first. All fifteen are normative in <a href="{{ site.baseurl }}/invariants.html">Invariants</a>.</p>
+    </div>
+    <div class="contracts">
+      <div class="contract">
+        <p class="contract-num">01</p>
+        <h3 class="contract-title">Fail-open <span class="inv">I1</span></h3>
+        <p>Any internal failure — crash, timeout, bad config, full disk — sends traffic to the origin unmodified. Mirage must never be the reason a site is down.</p>
+      </div>
+      <div class="contract">
+        <p class="contract-num">02</p>
+        <h3 class="contract-title">Observe by default <span class="inv">I9</span></h3>
+        <p>Enforcement is opt-in per site, and there is a global kill switch. Actions fire only in protect mode, with the block opt-in set and the switch clear.</p>
+      </div>
+      <div class="contract">
+        <p class="contract-num">03</p>
+        <h3 class="contract-title">Explainable <span class="inv">I10</span></h3>
+        <p>Every automated action stores its evidence: signals fired, weights, verdict, reason code, session key. Plain-English reason texts ship with the data.</p>
+      </div>
+      <div class="contract">
+        <p class="contract-num">04</p>
+        <h3 class="contract-title">Local-only hot path <span class="inv">I3</span></h3>
+        <p>No network call, disk wait or LLM call while handling a request. Decisions come from an in-memory snapshot, under a hard deadline.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
 <section class="section">
   <div class="section-inner">
@@ -182,6 +225,7 @@ order: 0
     </div>
     <div class="hero-actions">
       <a class="btn btn-primary" href="{{ site.baseurl }}/guide/">Read the guide</a>
+      <a class="btn btn-ghost" href="{{ site.baseurl }}/agent/">For AI agents</a>
       <a class="btn btn-ghost" href="{{ site.baseurl }}/llms.txt">llms.txt</a>
       <a class="btn btn-ghost" href="{{ site.baseurl }}/changelog.html">Changelog</a>
     </div>
