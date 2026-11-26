@@ -1,0 +1,25 @@
+# Secrets — never commit
+.secrets/
+*.token
+*.pem
+.env
+
+# Go
+/bin/
+/dist/
+*.test
+*.out
+coverage.txt
+go.work.sum
+
+# Node / Cloudflare Worker
+node_modules/
+.wrangler/
+dist/
+*.tsbuildinfo
+
+# Local state
+*.db
+*.db-shm
+*.db-wal
+/mirage.yaml
