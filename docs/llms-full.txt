@@ -221,6 +221,13 @@ its Go package.
 
 ## The path of one request
 
+The figure below traces the full lifecycle at a glance: the synchronous
+decision from the client through the adapter, engine and verdict ladder to
+the action, then the asynchronous trail from the bounded event queue through
+the store to the connectors.
+
+{% include diagrams/decision-path.html %}
+
 **1. Adapter submits a request.** An edge adapter — Go middleware, the
 Cloudflare Worker, a future plugin — builds a `model.Request`: `method`,
 `path` (raw, including dot segments and query), `client_ip`, `user_agent`,
@@ -417,6 +424,12 @@ anything a model guessed.
 | `decoy_route` | `request_score ≥ 25` AND class `high` AND the path is decoyable (matches a decoy entry; not protected) | `serve_decoy` |
 | `throttle` | `request_score ≥ 40` | adapter-local throttle |
 | `ban` | `honeytoken_use` fired, OR (`decoy_lead_follow` fired AND path not protected), OR (`request_score ≥ 60` AND class `high`) | short block, only when enforcement is enabled (I9) |
+
+The ladder below stacks the five rungs with their exact thresholds, and the
+two annotations mark the rules that bound how high a verdict can climb: the
+protected-route cap and the history rule.
+
+{% include diagrams/verdict-ladder.html %}
 
 ## What history can and cannot do
 

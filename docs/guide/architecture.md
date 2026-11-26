@@ -14,6 +14,13 @@ its Go package.
 
 ## The path of one request
 
+The figure below traces the full lifecycle at a glance: the synchronous
+decision from the client through the adapter, engine and verdict ladder to
+the action, then the asynchronous trail from the bounded event queue through
+the store to the connectors.
+
+{% include diagrams/decision-path.html %}
+
 **1. Adapter submits a request.** An edge adapter — Go middleware, the
 Cloudflare Worker, a future plugin — builds a `model.Request`: `method`,
 `path` (raw, including dot segments and query), `client_ip`, `user_agent`,
