@@ -58,9 +58,9 @@ cover the whole system from first request to production runbook.
 - [Deploy guides]({{ site.baseurl }}/deploy/quickstart.html) — the
   from-zero path, the nginx transparent-proxy topology, and the Cloudflare
   Worker that runs at the edge.
-- [Reference]({{ site.baseurl }}/reference/index.html) — every config key,
+- [Reference]({{ site.baseurl }}/reference/) — every config key,
   every CLI subcommand, the shared data files and the normative specs.
-- [Reading Mirage as an agent]({{ site.baseurl }}/agent/index.html) — the
+- [Reading Mirage as an agent]({{ site.baseurl }}/agent/) — the
   machine-readable surface (`/llms.txt`, `/docs.json`, `--json` outputs)
   for programs that consume this documentation.
 

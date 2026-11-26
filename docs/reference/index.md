@@ -46,6 +46,6 @@ the recorded version and regenerate the golden vectors:
 | `spec/golden-vectors/` | — | The executable contract: 20 cases / 68 requests, plus the render fixture. |
 
 For prose that explains rather than enumerates, start at the
-[guide index]({{ site.baseurl }}/guide/index.html). For machine-readable
+[guide index]({{ site.baseurl }}/guide/). For machine-readable
 consumption of this documentation, see
-[Reading Mirage as an agent]({{ site.baseurl }}/agent/index.html).
+[Reading Mirage as an agent]({{ site.baseurl }}/agent/).

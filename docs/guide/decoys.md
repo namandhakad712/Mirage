@@ -62,13 +62,13 @@ headers, plus robots.txt disallow and absence from sitemaps.
 
 ## Render determinism
 
-Bodies are templates with `{{SEED:*}}` and `{{TOKEN:*}}` slots. Seeds derive
+Bodies are templates with `{% raw %}{{SEED:*}}{% endraw %}` and `{% raw %}{{TOKEN:*}}{% endraw %}` slots. Seeds derive
 from `sha256(session_key + ":" + entry_id + ":seed:" + spec + ":" + k)`,
 where `k` counts occurrences of that spec string in the body — two
 identical slots never render the same value, and the derivation is
 byte-identical across the Go and TypeScript engines. Formats:
-`{{SEED:N_HEX}}` (first N hex chars, N ≤ 64), `{{SEED:N_B64}}` (N unpadded
-base64 chars, N a multiple of 4), `{{SEED:N_UPPER}}` (N digest bytes folded
+`{% raw %}{{SEED:N_HEX}}{% endraw %}` (first N hex chars, N ≤ 64), `{% raw %}{{SEED:N_B64}}{% endraw %}` (N unpadded
+base64 chars, N a multiple of 4), `{% raw %}{{SEED:N_UPPER}}{% endraw %}` (N digest bytes folded
 mod 36 over A-Z0-9). The rendered body of every entry for two fixed session
 keys is pinned byte-for-byte by `spec/golden-vectors/renders.json`; both
 engines must reproduce it exactly, and CI fails on any divergence.
@@ -104,8 +104,8 @@ entries:
     size_cap_bytes: 1024
     body: |
       -- WordPress database dump (staging)
-      -- dump id: {{SEED:12_UPPER}}
-      -- restore token: {{TOKEN:restore_key}}
+      -- dump id: {% raw %}{{SEED:12_UPPER}}{% endraw %}
+      -- restore token: {% raw %}{{TOKEN:restore_key}}{% endraw %}
       --
       -- [binary payload truncated]
     leads:

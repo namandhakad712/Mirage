@@ -1,0 +1,126 @@
+# Site navigation. tools/check_site.py validates that every url below
+# resolves to a page and that every content page appears exactly once, so
+# this file and the page tree cannot drift apart.
+sections:
+  - id: guide
+    title: Guide
+    items:
+      - title: Overview
+        url: /guide/
+        description: "What the guide covers and the recommended reading order."
+      - title: Getting Started
+        url: /guide/getting-started.html
+        description: "Zero to a running look-mode instance."
+      - title: Architecture
+        url: /guide/architecture.html
+        description: "The decision path end to end, package by package."
+      - title: Signals
+        url: /guide/signals.html
+        description: "The 11 detection signals explained for operators."
+      - title: Verdicts
+        url: /guide/verdicts.html
+        description: "The verdict ladder, score arithmetic and renewal."
+      - title: Decoys
+        url: /guide/decoys.html
+        description: "Personas, leads, honeytokens and serving rules."
+      - title: Modes
+        url: /guide/modes.html
+        description: "look, tripwires, protect — the operational ladder."
+      - title: Tooling
+        url: /guide/tooling.html
+        description: "Every gate, generator and lab in the repository."
+      - title: Operations
+        url: /guide/operations.html
+        description: "Production runbook: stores, budgets, connectors."
+      - title: Testing
+        url: /guide/testing.html
+        description: "Golden vectors, race suite, fault matrix, parity."
+      - title: FAQ
+        url: /guide/faq.html
+        description: "Honest answers, including what Mirage is not."
+
+  - id: reference
+    title: Reference
+    items:
+      - title: Reference Index
+        url: /reference/
+        description: "All reference pages at a glance."
+      - title: Configuration
+        url: /reference/config.html
+        description: "Every key with default, bound and rationale."
+      - title: CLI
+        url: /reference/cli.html
+        description: "mirage serve, doctor, posture, replay, init, version."
+
+  - id: spec
+    title: Specifications
+    items:
+      - title: Signal Specification
+        url: /spec/SIGNALS.html
+        description: "SIGNALS v1.1.0 — weights, gating, verdict ladder."
+      - title: Adapter Protocol
+        url: /spec/ADAPTER-PROTOCOL.html
+        description: "The request, decision and event contract (v1)."
+      - title: Decoy Catalog
+        url: /spec/DECOY-CATALOG.html
+        description: "Catalog format and validation rules (v1)."
+      - title: Golden Vectors
+        url: /spec/golden-vectors/HAND-COMPUTED.html
+        description: "20 hand-computed cases, 68 requests."
+
+  - id: deploy
+    title: Deployment
+    items:
+      - title: Quickstart
+        url: /deploy/quickstart.html
+        description: "The shortest honest path to a running Mirage."
+      - title: nginx
+        url: /deploy/nginx.html
+        description: "Transparent-proxy topology on your own origin."
+      - title: Cloudflare Worker
+        url: /deploy/cloudflare-worker.html
+        description: "The zero-dependency edge port."
+
+  - id: project
+    title: Project
+    items:
+      - title: About
+        url: /about.html
+        description: "What Mirage is, from the README."
+      - title: Changelog
+        url: /changelog.html
+        description: "Every notable change, per round."
+      - title: Charter
+        url: /charter.html
+        description: "Mission and non-goals."
+      - title: Invariants
+        url: /invariants.html
+        description: "I1-I15 — the properties the code must preserve."
+      - title: Claims Policy
+        url: /claims-policy.html
+        description: "What we claim, and what we refuse to claim."
+      - title: Known Limits
+        url: /known-limits.html
+        description: "Where Mirage does not help."
+      - title: Vendor Notes
+        url: /vendor-notes.html
+        description: "CrowdSec, Cloudflare and webhook receiver surfaces."
+      - title: Design
+        url: /design/MIRAGE-DESIGN.html
+        description: "The full production design document."
+      - title: ADR-0001
+        url: /adr/0001-no-public-decoy-marker.html
+        description: "No public decoy marker."
+
+  - id: agent
+    title: For Agents
+    items:
+      - title: Reading Mirage as an Agent
+        url: /agent/
+        description: "llms.txt, docs.json, specs and JSON CLI output."
+      - title: llms.txt
+        url: /llms.txt
+        description: "Curated machine index of this documentation."
+      - title: docs.json
+        url: /docs.json
+        description: "Structured manifest of every page."

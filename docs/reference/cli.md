@@ -112,5 +112,5 @@ every Decision, so a deployed binary can be matched to its spec revision.
 - An unknown flag or subcommand is an error (exit 1), matching the
   fail-closed-at-boot discipline of the config loader.
 - Machine consumers should read the [agent
-  page]({{ site.baseurl }}/agent/index.html) for the full machine-readable
+  page]({{ site.baseurl }}/agent/) for the full machine-readable
   surface.

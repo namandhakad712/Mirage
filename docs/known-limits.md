@@ -1,5 +1,10 @@
-# Known Limits — written first, on purpose
-
+---
+layout: doc
+title: "Known Limits"
+description: "Where Mirage does not help — the honest boundary list."
+category: project
+order: 6
+---
 Before anyone else says "but it didn't stop X": here is what Mirage cannot
 do. This page is a feature, not an apology. It ships with v0.1 and grows only
 by adding measured honesty.
@@ -60,4 +65,4 @@ by adding measured honesty.
 
 Hack-back, live credential formats, web poisoning, misinformation decoys,
 indexable decoys, permanent range bans. Declined by
-[charter](charter.md).
+[charter]({{ site.baseurl }}/charter.html).

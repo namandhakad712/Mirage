@@ -1,5 +1,10 @@
-# Deploying the Mirage Cloudflare Worker
-
+---
+layout: doc
+title: "Cloudflare Worker"
+description: "Build, configure and deploy the zero-dependency worker port, including secrets and shared-data regeneration."
+category: deploy
+order: 3
+---
 This is the deployment that runs today: a Cloudflare Worker carrying the
 same SIGNALS v1.1.0 detection engine and decoy catalog as the Go core,
 in-process, with zero runtime dependencies (the only imports are Mirage's
@@ -136,7 +141,7 @@ Fail-open is the contract (ADAPTER-PROTOCOL §3, I1), implemented in
   invocations, so durable bans and throttles belong to the Go core; the
   worker's `ban`/`throttle` are per-request local responses. Long-horizon
   session signals are therefore approximate in worker mode — a recorded
-  limit in [known-limits.md](../known-limits.md).
+  limit in [known-limits.md]({{ site.baseurl }}/known-limits.html).
 - **Client identity comes from `CF-Connecting-IP`**, set by the Cloudflare
   platform and unspoofable by clients. Spoofable headers like
   `X-Forwarded-For` are deliberately never scored (I6).
@@ -152,8 +157,8 @@ the full golden-vector corpus shared with the Go implementation.
 
 ## See also
 
-- [quickstart.md](quickstart.md) — the full from-zero path.
-- [vendor-notes.md](../vendor-notes.md) — the enforcement side of Mirage
+- [quickstart.md]({{ site.baseurl }}/deploy/quickstart.html) — the full from-zero path.
+- [vendor-notes.md]({{ site.baseurl }}/vendor-notes.html) — the enforcement side of Mirage
   (CrowdSec, Cloudflare access rules, webhook receivers), which stays
   with the self-hosted core.
 - `spec/ADAPTER-PROTOCOL.md` — the normative contract the handler

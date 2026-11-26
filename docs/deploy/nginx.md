@@ -1,5 +1,10 @@
-# nginx — the transparent-proxy integration
-
+---
+layout: doc
+title: "nginx Topology"
+description: "Run Mirage as a transparent proxy behind nginx: X-Forwarded-For handling, trusted proxies, the deny map and the fail-open contract."
+category: deploy
+order: 2
+---
 This is the reference topology for self-hosted Mirage: nginx terminates
 TLS and proxies to Mirage; Mirage scores each request, serves decoys to
 already-suspicious sessions, and passes everything else to your origin
@@ -15,7 +20,7 @@ connectors) and the invariants.
 
 - **A TLS-terminating proxy.** Mirage does no TLS termination in v1 — it
   sits behind nginx (or Caddy, or Cloudflare). This keeps Mirage's attack
-  surface small; see [known-limits.md](../known-limits.md).
+  surface small; see [known-limits.md]({{ site.baseurl }}/known-limits.html).
 - **One proxy hop it can trust.** Mirage derives the real client IP from
   the socket address, or from `X-Forwarded-For` **only when the immediate
   peer is a trusted proxy listed in `trusted_proxies`** (I6). The chain is
@@ -113,7 +118,7 @@ nginx picks up deny-map changes only on reload. Mirage writes the file; it
 does not signal nginx — an automated reload belongs to your automation.
 The natural place is a small webhook receiver: Mirage signs every ban and
 unban notice with `X-Mirage-Signature`
-([vendor-notes.md](../vendor-notes.md) documents the exact verification), and
+([vendor-notes.md]({{ site.baseurl }}/vendor-notes.html) documents the exact verification), and
 your receiver runs `nginx -t && nginx -s reload` only after the signature
 checks out.
 
@@ -152,9 +157,9 @@ topology:
 
 ## See also
 
-- [quickstart.md](quickstart.md) — from zero to a verified build and a
+- [quickstart.md]({{ site.baseurl }}/deploy/quickstart.html) — from zero to a verified build and a
   prepared `mirage.yaml`.
-- [vendor-notes.md](../vendor-notes.md) — the CrowdSec, Cloudflare and
+- [vendor-notes.md]({{ site.baseurl }}/vendor-notes.html) — the CrowdSec, Cloudflare and
   webhook receiver contracts behind `protect` mode.
-- [cloudflare-worker.md](cloudflare-worker.md) — the edge deployment that
+- [cloudflare-worker.md]({{ site.baseurl }}/deploy/cloudflare-worker.html) — the edge deployment that
   runs today, if you would rather not self-host at all.

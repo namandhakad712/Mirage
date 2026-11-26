@@ -1,0 +1,42 @@
+# Scanner paths — classic sensitive-file and backup probes (normalized match).
+# One path per line. Loader rule (SIGNALS §3.3): an entry with a trailing
+# slash also matches the same entry without it. Matching is on the
+# query-stripped, dot-segment-normalized path.
+/.env
+/.env.local
+/.env.production
+/.git/config
+/.git/HEAD
+/.git/index
+/.aws/credentials
+/.ssh/id_rsa
+/.ssh/authorized_keys
+/.DS_Store
+/.svn/entries
+/.svn/wc.db
+/.htaccess.bak
+/.htpasswd
+/.bash_history
+/.mysql_history
+/wp-config.php.bak
+/wp-config.php.save
+/wp-config.php.old
+/phpmyadmin-old/
+/pma-old/
+/administrator/backups/
+/backup.sql
+/backup.zip
+/backup.tar.gz
+/db.sql
+/dump.sql
+/database.sql
+/database.sql.gz
+/site-backup.zip
+/web.config.bak
+/server-backup.tar.gz
+/.elastic/config/elasticsearch.yml
+/.docker/config.json
+/composer.lock.bak
+/package.json.bak
+/ids.sql
+/data.sql

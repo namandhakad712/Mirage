@@ -1,5 +1,10 @@
-# Mirage Invariants — the constitution
-
+---
+layout: doc
+title: "Invariants"
+description: "I1-I15: the properties every line of Mirage must preserve, and the tests that hold them."
+category: project
+order: 4
+---
 These fifteen invariants are binding. Every feature, pull request and agent
 run is checked against them, and at least one test exists for each one. A
 human maintainer can waive one only through a recorded ADR in `docs/adr/`.

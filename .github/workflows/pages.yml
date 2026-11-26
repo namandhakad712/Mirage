@@ -1,0 +1,67 @@
+name: pages
+
+# Docs site deployment: build docs/ with the same Jekyll GitHub Pages
+# runs (actions/jekyll-build-pages), then publish via the Pages artifact
+# flow. The structural gates (sync + integrity checks) run first, so a
+# drifted or broken site never deploys; a failed deploy leaves the
+# previous release of the site untouched.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install PyYAML for the site gates
+        run: python3 -m pip install --user pyyaml
+
+      - name: Site sync gate (spec/data mirrors and manifests fresh)
+        run: python3 tools/sync_site_docs.py --check
+
+      - name: Site integrity gate (front matter, links, nav, manifests)
+        run: python3 tools/check_site.py
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build the site with the Pages Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./docs
+          destination: ./_site
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

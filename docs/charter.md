@@ -1,5 +1,10 @@
-# Mirage Charter — scope, ethics, and what we will never ship
-
+---
+layout: doc
+title: "Charter"
+description: "The mission, the non-goals, and the line Mirage refuses to cross."
+category: project
+order: 3
+---
 This charter is the contract between Mirage and its users. It is short on
 purpose: everything here is enforceable, and everything enforceable is here.
 
@@ -28,7 +33,7 @@ What Mirage does not do — and will not do:
   become someone else's security incident.
 - **No overclaiming.** We say "detects scouting and wastes attacker effort".
   We never say "stops attack agents". Decoys do not stop an agent that goes
-  straight to a real vulnerability. [Known limits](known-limits.md) is
+  straight to a real vulnerability. [Known limits]({{ site.baseurl }}/known-limits.html) is
   written first, not after the first critic.
 - **No paywalls on safety features.** The posture check, Watch mode, decoys
   and the dashboard are free forever. Sponsorships and optional paid support

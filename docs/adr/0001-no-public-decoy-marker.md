@@ -1,5 +1,10 @@
-# ADR-0001: Decoys carry no public marker
-
+---
+layout: doc
+title: "ADR-0001: No Public Decoy Marker"
+description: "Decoys and denials must not fingerprint Mirage — the reasoning and the consequences."
+category: project
+order: 9
+---
 - **Status:** Accepted
 - **Date:** 2026-11-26
 - **Deciders:** maintainer (design doc Part II section 18), Architect
