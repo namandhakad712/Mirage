@@ -48,6 +48,9 @@
   pointer-events: none;
 }
 
+/* Light theme: the thin additive teal lines need weight on the pale ground. */
+[data-theme="light"] .hero-canvas { filter: brightness(0.78) saturate(1.3); }
+
 /* Functional bottom scrim: contrast engineering under the hero copy. */
 .hero-scrim {
   position: absolute;
@@ -93,7 +96,7 @@
   width: 100%;
   max-width: 1120px;
   margin: 0 auto;
-  padding: 120px 24px 88px;
+  padding: 120px 24px 64px;
 }
 
 .hero-eyebrow {
@@ -211,7 +214,7 @@
 
 @media (max-width: 880px) {
   .hero { min-height: min(78vh, 40rem); }
-  .hero-inner { padding: 88px 20px 60px; }
+  .hero-inner { padding: 88px 20px 52px; }
   .spec-strip-inner { padding: 12px 20px; }
 }
 

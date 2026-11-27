@@ -700,6 +700,14 @@ code, pre, kbd { font-family: var(--font-mono); }
 }
 .doc-content th:last-child, .doc-content td:last-child { min-width: 0; }
 
+/* Cell chips stay on one line: the table itself is the horizontal scroll
+   container, so a wide chip scrolls instead of breaking mid-word. */
+.doc-content th code, .doc-content td code {
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
 .doc-content thead th {
   position: sticky;
   top: 0;
