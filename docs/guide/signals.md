@@ -41,7 +41,7 @@ explains the request. `decoy_lead_follow` (40) means the session asked for a
 path like `/storage/logs/laravel-staging.log` that only ever appeared inside
 a decoy it was served — near-certain evidence of a scout reading the bait.
 `honeytoken_use` (50) means a minted fake credential such as
-`mrg_live_9k2mf7xq4wbvt1z6n8p3rds0` appeared in an Authorization header,
+`mrg_live_9f2ab04c1d7e83a5c60214bd` appeared in an Authorization header,
 body or query — near-certain evidence, and it names exactly which decoy
 leaked. `path_enumeration` (25) fires on the eighth distinct *unknown* path
 inside 60 seconds; unknown excludes `/`, protected routes, scanner paths,

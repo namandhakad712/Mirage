@@ -106,6 +106,13 @@ silently disable a security control.
 ./bin/mirage serve   --config mirage.yaml --upstream http://127.0.0.1:9000
 ```
 
+The proxy forwards everything to `--upstream`; with no origin of your
+own yet, give it a demo one in a second terminal:
+
+```sh
+python3 -m http.server 9000
+```
+
 `serve` composes the whole stack — store, engine, catalog, queue,
 gatekeeper, connectors — into the edge middleware: benign traffic proxies
 through to the upstream, scanner paths are answered with persona decoys
@@ -114,8 +121,9 @@ loopback at `--dashboard-addr` (default `127.0.0.1:8090`; non-loopback
 binds are refused). A realistic first session:
 
 ```sh
-curl http://127.0.0.1:8080/            # 200 from your upstream
-curl http://127.0.0.1:8080/.env        # also 200 — loopback is never scored (I6): no signal fires
+curl http://127.0.0.1:8080/            # 200 — the proxy answers with your origin's page
+curl http://127.0.0.1:8080/.env        # 404 — whatever your origin answers, mirrored unscored
+TOKEN=$(grep dashboard_token mirage.yaml | sed 's/.*: *"\{0,1\}//; s/"\{0,1\} *$//')
 curl -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8090/api/events
 ```
 

@@ -87,9 +87,10 @@ input.
 
 ## Machine-readable CLI output
 
-`mirage doctor`, `mirage posture` and `mirage replay` emit `--json`: an
-`ok` boolean, the config's `mode`, and a `checks` array of `{name,
-status, detail}` — see the
+`mirage doctor`, `mirage posture` and `mirage replay` emit `--json`,
+each with its own envelope — doctor `{ok, mode, spec_version, checks:
+[{name, ok, detail}]}`, posture `{mode, warnings, checks: [{name,
+value}]}`, replay `{ok, total, passed, failed, cases}` — see the
 [CLI reference]({{ site.baseurl }}/reference/cli.html) for the exact
 envelope and exit codes (0 ok, 1 failure or mismatch).
 
