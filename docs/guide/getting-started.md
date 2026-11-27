@@ -46,13 +46,20 @@ runs.
 mirage init --config mirage.yaml
 ```
 
-`mirage init` writes a minimal valid config (it also refuses decoy paths
-that collide with real routes, `/.well-known/`, robots.txt, sitemaps and
-health checks — I4). Open `mirage.yaml` and make two decisions:
+`mirage init` writes a minimal valid config: `mode: "look"` and a
+generated `dashboard_token` — those two keys only; every other key keeps
+its documented default, and init loads the written file back through
+strict validation before reporting success. Init checks nothing else —
+the decoy-catalog path rules are enforced by the catalog loader at load
+time, not by init (see
+[decoys]({{ site.baseurl }}/guide/decoys.html)). Open `mirage.yaml` and
+look at the two keys:
 
 - **`dashboard_token`** — required, and required even though the default
   `listen` is loopback: an unauthenticated local endpoint is one `curl`
-  away from a takeover. Generate one and paste it in:
+  away from a takeover. Init already generated one (crypto/rand); if you
+  hand-write the file from `mirage.example.yaml` instead, generate one
+  and paste it in:
 
   ```bash
   openssl rand -hex 32
@@ -77,20 +84,37 @@ failure is named. Add `--json` for machine-readable output (see the
 
 ## 3. Run it
 
+`serve` requires both the config and the upstream origin — there is no
+`upstream` key in the config, so the origin is always named explicitly.
+For a demo origin, serve the current directory on port 9000 in one
+terminal:
+
 ```bash
-mirage serve --config mirage.yaml
+python3 -m http.server 9000
 ```
 
-Mirage binds `listen` (default `127.0.0.1:8080`), scores every request
-that reaches it, and serves the token-guarded dashboard on the same
-address. In a second terminal, confirm the process is alive:
+Then run Mirage in front of it:
 
 ```bash
-curl -s http://127.0.0.1:8080/healthz
+mirage serve --config mirage.yaml --upstream http://127.0.0.1:9000
+```
+
+Mirage runs two servers. The proxy binds `listen` (default
+`127.0.0.1:8080`), scores every request that reaches it and forwards
+traffic to the upstream. The token-guarded dashboard binds its own
+loopback address, `--dashboard-addr` (default `127.0.0.1:8090`; non-
+loopback binds are refused at startup). `/healthz` lives on the dashboard
+mux, so the liveness probe is:
+
+```bash
+curl -s http://127.0.0.1:8090/healthz
 ```
 
 `/healthz` is the one tokenless endpoint — the load-balancer probe — with
-a fixed body and nothing else.
+a fixed body and nothing else. The dashboard is loopback-only by design:
+on a remote host, tunnel it instead of opening it —
+`ssh -L 8090:127.0.0.1:8090 you@example.com` — and browse
+`http://127.0.0.1:8090` from your workstation.
 
 ## 4. Generate a benign request and a scanner path
 
@@ -99,21 +123,36 @@ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/.env
 ```
 
+Both answer 200 from the demo origin, and neither is scored: requests
+from loopback are never scored (I6) — they produce verdict `observe`,
+fire no signals and record no session state. The two curls prove the
+proxy and the fail-open path, nothing else.
+
+Scoring engages for requests from a real remote address. Point `listen`
+at an address a second machine can reach (for example
+`listen: "192.168.1.10:8080"`), restart `serve`, then from that machine:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' http://192.168.1.10:8080/
+curl -s -o /dev/null -w '%{http_code}\n' http://192.168.1.10:8080/.env
+```
+
 Score both requests the way the engine does. The first is ordinary: a bare
 `curl` sends three headers (Host, User-Agent, Accept), which fires
 `headers_sparse` (10, medium) — under the tag threshold of 15 — so the
 verdict is `observe`. The second matches `data/scanner-paths.txt`, firing
-`scanner_path` (25, high, `SIG-101`); because a signal from the ungating
-set fired the same request, `tooling_curl` (15) fires too: request score
-25 + 15 = 40. In look mode the verdict is capped at `tag` and the action
-is always `pass` — both requests reach the origin unmodified (I1, I9).
-What changes is the record.
+`scanner_path` (25, high, `SIG-101`); that same-request signal ungates
+`tooling_curl` (15), and the sparse header set fires `headers_sparse`
+(10) too: request score 25 + 15 + 10 = 50. On the verdict ladder 50 is
+`throttle` territory, but in look mode the verdict is capped at `tag` and
+the action is always `pass` — the request reaches the origin unmodified
+(I1, I9). What changes is the record.
 
 ## 5. Read the events
 
 ```bash
 TOKEN="paste-the-dashboard_token-value"
-curl -s -H "X-Mirage-Dashboard-Token: $TOKEN" http://127.0.0.1:8080/api/events
+curl -s -H "X-Mirage-Dashboard-Token: $TOKEN" http://127.0.0.1:8090/api/events
 ```
 
 The token also rides as `Authorization: Bearer ...`. `/api/events` returns

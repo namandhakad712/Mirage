@@ -60,8 +60,13 @@ v1 ships three personas:
 Catalog safety rules (validated by `internal/decoy` and mirrored in the
 worker):
 
-1. Paths must not collide with real routes, `/.well-known/**`, robots.txt,
-   sitemaps or health checks (`mirage init` enforces at install time).
+1. Entry paths are unique within the catalog, and a lead must not claim
+   `/.well-known/**` or collide with an entry path — the catalog loader
+   enforces those at load time (`internal/decoy`). Entries must also
+   stay off real routes, robots.txt, sitemaps and health checks; that
+   part is catalog-author discipline (the shipped catalog complies), and
+   the engine independently caps protected routes at `tag`, so a
+   colliding entry is never served there (I4).
 2. `/.env` and `/.git/config` also appear in `data/scanner-paths.txt`;
    the engine suppresses `decoy_hit` behind `scanner_path` (SIGNALS §4.2) —
    the catalog entry is still what gets **served** on `decoy_route`.
@@ -85,9 +90,13 @@ fixed session keys); both engines must reproduce it exactly.
   `{{SEED:N_B64}}` — N unpadded standard-base64 chars (N must be a
   multiple of 4, derived from the first 3N/4 digest bytes).
   `{{SEED:N_UPPER}}` — first N digest bytes folded mod 36 over A-Z0-9.
-- `{{TOKEN:id}}` — mint a honeytoken from `data/token-formats.md`, unique
-  per (session, entry, id). Later use of the exact string anywhere Mirage
-  can see fires `honeytoken_use` (SIG-104) and proves which decoy leaked.
+- `{{TOKEN:id}}` — mint the honeytoken for (session, entry, id) as
+  `"mrg_live_" + hex(sha256(session_key + ":" + entry_id + ":" + token_id))[:24]`
+  — the first 24 hex characters of the digest, so a token names its
+  session, entry and slot without a database. The one mintable format is
+  `token_alnum_24` in `data/token-formats.md`. Later use of the exact
+  string anywhere Mirage can see fires `honeytoken_use` (SIG-104) and
+  proves which decoy leaked.
 
 Timestamps inside bodies render from `ts_ms` of the serving request, so
 decoys never contradict themselves within a session.

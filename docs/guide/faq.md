@@ -76,7 +76,8 @@ you opt in.
 ## Can attackers detect Mirage?
 
 Over time, any fixed decoy set can be fingerprinted and skipped — stated
-in known limits, which is why packs rotate and vary per install. Decoys
+in known limits (community decoy packs are planned after 1.0; none ship
+today). Decoys
 carry no public "this is a decoy" marker (ADR-0001): safety comes from
 audience gating, noindex headers and a published security.txt contact for
 legitimate researchers.

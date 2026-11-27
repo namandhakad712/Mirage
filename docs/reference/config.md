@@ -55,7 +55,7 @@ Canon `protected_routes` default: `/wp-login.php`, `/wp-admin/`, `/checkout`,
 | --- | --- | --- | --- | --- | --- |
 | `enforcement.enabled` | bool | `false` | May only be `true` when `mode` is `protect`; otherwise a boot-time error | Master opt-in for enforcement | I9: even when true, the kill switch and the budgets still gate every action |
 | `enforcement.kill_switch` | bool | `false` | — | The global off-switch: while `true` no ban or throttle executes and no connector is called | Flip it when anything looks wrong; it takes effect immediately, renewal included |
-| `enforcement.ban_ttl_ms` | int | `1800000` (30 minutes) | Milliseconds | Ban TTL, single address | I5, I15: short and reversible by design |
+| `enforcement.ban_ttl_ms` | int | `1800000` — 1,800,000 ms (30 minutes) | Milliseconds | Ban TTL, single address | I5, I15: short and reversible by design |
 
 ### Budgets
 
@@ -91,9 +91,11 @@ time and never stored on the Config.
 ## Loading rules worth remembering
 
 - Copy the example to `mirage.yaml` (gitignored on purpose) — or generate
-  one with `mirage init`, which also refuses decoy paths colliding with
-  real routes, `/.well-known/`, robots.txt, sitemaps and health checks
-  (I4).
+  one with `mirage init`, which writes `mode: "look"` and a generated
+  `dashboard_token` (nothing else) and validates the file before
+  reporting success. The decoy-path rules — duplicate entry paths, leads
+  under `/.well-known/`, lead/entry collisions — are enforced by the
+  catalog loader at load time (I4), not by init.
 - Every violation is listed before the boot fails, so one edit can fix
   them all.
 - Validate staged changes without booting: `mirage doctor --config

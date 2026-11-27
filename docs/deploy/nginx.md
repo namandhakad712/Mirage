@@ -8,12 +8,11 @@ order: 2
 This is the reference topology for self-hosted Mirage: nginx terminates
 TLS and proxies to Mirage; Mirage scores each request, serves decoys to
 already-suspicious sessions, and passes everything else to your origin
-unmodified. Two parts of this page are runnable today — the deny map and
-the reverse-proxy/X-Forwarded-For conventions — and the rest describes the
-deployment the `mirage` server binary serves when it lands with the server
-release. Nothing here is hypothetical about Mirage's side: every behavior
-described is pinned by `internal/config` (the `listen` and
-`trusted_proxies` keys), `internal/connectors` (the deny map and webhook
+unmodified. Everything on this page is runnable today — the `mirage
+serve` binary is shipped — and nothing is hypothetical about Mirage's
+side: every behavior described is pinned by `internal/config` (the
+`listen` and `trusted_proxies` keys), `internal/service` (the proxy and
+the loopback dashboard), `internal/connectors` (the deny map and webhook
 connectors) and the invariants.
 
 ## What Mirage needs in front
@@ -85,12 +84,15 @@ proxy can spoof client identity to Mirage; an unlisted one cannot.
 
 ## The loopback dashboard
 
-The dashboard and core API bind to `listen`, loopback by default. Reach it
-through an SSH tunnel instead of opening it:
+The dashboard is a separate server from the proxy: it binds
+`--dashboard-addr` (default `127.0.0.1:8090`), loopback only — non-
+loopback binds are refused at startup — while the proxy itself binds
+`listen`. Reach the dashboard through an SSH tunnel instead of opening
+it:
 
 ```sh
-ssh -L 8080:127.0.0.1:8080 you@example.com
-# then, on your workstation: http://127.0.0.1:8080
+ssh -L 8090:127.0.0.1:8090 you@example.com
+# then, on your workstation: http://127.0.0.1:8090
 ```
 
 The dashboard requires a token **even on loopback** — an unauthenticated
@@ -98,7 +100,7 @@ local endpoint is one `curl` away from a full takeover. Generate it with
 `openssl rand -hex 32` and set `dashboard_token` in `mirage.yaml`. This is
 a hard validation rule, not advice: an empty token is a boot-time error.
 
-## The deny map (runnable today)
+## The deny map
 
 The denyfile connector (`internal/connectors/denyfile.go`) maintains an
 nginx-compatible deny map: one line per address, sorted, and written

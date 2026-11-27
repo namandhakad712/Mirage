@@ -56,8 +56,9 @@ spoofable header (I6).
 7. Deadline check again, after enforcement wiring; on overrun the adapter
    still sees the fail-open decision.
 8. Event emission: a bounded queue write that never blocks (I3). On a full
-   queue the newest event is dropped and counted — losing evidence is better
-   than stalling a request.
+   queue the core drops the newest event and counts it — losing evidence
+   is better than stalling a request. (The TypeScript worker's ring
+   buffer drops the oldest instead; both engines keep the drop count.)
 
 **3. The adapter acts** on the returned `model.Decision`: `pass` (forward
 unmodified), `serve_decoy` (render the decoy named by `decoy_id` locally

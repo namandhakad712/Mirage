@@ -11,12 +11,16 @@ decisions.
 
 ## Status: what runs today
 
-**Shipped and tested:** everything. The normative specs and golden vectors;
-the Go core (config, model, store, events, enforce, connectors); the
-SIGNALS v1.1.0 detection engine; the decoy data layer; the in-process HTTP
-edge middleware (`internal/edge`); the `mirage` CLI — `serve`, `doctor`,
-`init`, `posture`, `replay`, `version` (`cmd/mirage`); the fault-injection
-lab; and the Cloudflare Worker port. Every gate runs in CI on every push:
+**Shipped and tested:** the components listed in this section, each behind
+the repo's gates — nothing has been released yet, and the
+[changelog]({{ site.baseurl }}/changelog.html) tracks the work under
+`[Unreleased]`. The normative specs and golden vectors; the Go core
+(config, model, store, events, enforce, connectors); the SIGNALS v1.1.0
+detection engine; the decoy data layer; the in-process HTTP edge
+middleware (`internal/edge`); the `mirage` CLI — `serve`, `doctor`,
+`init`, `posture`, `replay`, `version` (`cmd/mirage`); the
+fault-injection lab; and the Cloudflare Worker port. Every gate runs in
+CI on every push:
 `make check` (fmt, vet, build, race tests, golden-vector cross-check,
 slop scan), the worker's npm build + test suite, and the docs-site gates.
 Run the Go core in front of an upstream with
@@ -111,7 +115,7 @@ binds are refused). A realistic first session:
 
 ```sh
 curl http://127.0.0.1:8080/            # 200 from your upstream
-curl http://127.0.0.1:8080/.env        # scored: scanner_path (+ tooling_curl for curl's UA)
+curl http://127.0.0.1:8080/.env        # also 200 — loopback is never scored (I6): no signal fires
 curl -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8090/api/events
 ```
 

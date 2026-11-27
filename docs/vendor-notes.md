@@ -155,10 +155,12 @@ X-Mirage-Signature: <hex(HMAC-SHA256(secret, body))>
 hex-encoded HMAC-SHA256 of the **exact request body bytes** (the same
 bytes that go on the wire), keyed by the secret. Verify before parsing,
 and never verify over re-serialized JSON — parse first and the signature
-will not match. In Python:
+will not match. In Python — pseudo-code; adapt `request.raw_body` and
+`request.headers` to your framework's request API. The HMAC logic is
+exact:
 
 ```python
-import hashlib, hmac
+import hashlib, hmac, os
 
 secret = os.environ["MIRAGE_WEBHOOK_SECRET"]     # the env var secret_env names
 body = request.raw_body                            # exact bytes, before any JSON parse

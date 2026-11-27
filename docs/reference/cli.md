@@ -6,25 +6,34 @@ category: reference
 order: 3
 ---
 
-The `mirage` binary has six subcommands. One global flag applies
-everywhere: `--config FILE` selects the site config (default `mirage.yaml`
-where the command accepts it). Exit codes are uniform: **0** success,
-**1** failure or mismatch — the same convention as the repo's quality
-gates, so scripts can trust a single check.
+The `mirage` binary has six subcommands. `--config FILE` names the site
+config on every subcommand that takes one — required on `serve`, `doctor`,
+`posture` and `replay` (no default), and the file to write on `init`
+(default `mirage.yaml`); `version` takes no flags. Exit codes are
+uniform: **0** success, **1** failure or mismatch — the same convention
+as the repo's quality gates, so scripts can trust a single check.
 
 ## mirage serve
 
 ```bash
-mirage serve --config mirage.yaml
+mirage serve --config mirage.yaml --upstream http://127.0.0.1:9000
 ```
 
-Runs the core: loads and validates the config (strict — a bad config exits
-1 before serving anything), binds `listen` (default `127.0.0.1:8080`),
-scores every request that reaches it, serves decoys per mode, drives
-enforcement and connectors, and serves the token-guarded dashboard
+Runs the core: loads and validates the config (strict — a bad config
+exits 1 before serving anything), then runs two servers. The proxy binds
+`listen`, scores every request that reaches it, forwards traffic to the
+upstream, serves decoys per mode and drives enforcement and connectors.
+The token-guarded dashboard binds its own loopback address
 (`/healthz`, `/api/status`, `/api/events`, `/api/sessions`, `/api/bans`,
 `POST /api/bans/revoke`). Any internal failure during a decision answers
 `pass` to the request (I1).
+
+| Flag | Default | Meaning |
+| --- | --- | --- |
+| `--config FILE` | required | Site configuration file |
+| `--upstream URL` | required | Upstream origin URL the proxy forwards to — there is no upstream key in the config |
+| `--listen ADDR` | the config's `listen` (`127.0.0.1:8080`) | Proxy listen address |
+| `--dashboard-addr ADDR` | `127.0.0.1:8090` | Dashboard listen address — loopback only, non-loopback binds are refused |
 
 ## mirage doctor
 
@@ -53,17 +62,30 @@ machine form. Shape:
 otherwise. (The JSON block above shows the shape of the envelope — field
 values are illustrative.)
 
+| Flag | Default | Meaning |
+| --- | --- | --- |
+| `--config FILE` | required | Site configuration file |
+| `--json` | `false` | Emit machine-readable JSON instead of the check table |
+
 ## mirage init
 
 ```bash
 mirage init
-mirage init --config path/to/mirage.yaml
+mirage init --config path/to/mirage.yaml --force
 ```
 
-Writes a minimal valid config, including a generated dashboard token, and
-refuses decoy paths that collide with real routes, `/.well-known/`,
-robots.txt, sitemaps and health checks (I4). Exits 1 if the target exists
-or a collision is found.
+Writes a minimal valid config — `mode: "look"` and a crypto/rand
+`dashboard_token` are the only keys; every other key keeps its
+documented default — and loads the written file back through strict
+validation before reporting success. Init checks nothing else: the
+decoy-path rules are the catalog loader's, enforced when a catalog is
+loaded, not at install time. Exits 1 if the target exists (unless
+`--force`) or the generated file fails validation.
+
+| Flag | Default | Meaning |
+| --- | --- | --- |
+| `--config FILE` | `mirage.yaml` | Configuration file to write |
+| `--force` | `false` | Overwrite an existing file |
 
 ## mirage posture
 
@@ -77,6 +99,11 @@ state, budgets, protected routes and connector readiness, reported as the
 same `ok` / `mode` / `checks[]` envelope as doctor. Use it before moving
 up the [mode ladder]({{ site.baseurl }}/guide/modes.html) — it answers
 "what would this config actually do" without booting the server.
+
+| Flag | Default | Meaning |
+| --- | --- | --- |
+| `--config FILE` | required | Site configuration file |
+| `--json` | `false` | Emit machine-readable JSON instead of the report |
 
 ## mirage replay
 
@@ -93,22 +120,30 @@ counts the rest. `--json` emits the run summary — the `ok` / `mode` /
 case. This is the command for verifying a modified config or catalog
 against the executable contract before deploying.
 
+| Flag | Default | Meaning |
+| --- | --- | --- |
+| `--config FILE` | required | Site configuration file |
+| `--vectors PATH` | `spec/golden-vectors/vectors.json` | Golden vector file to replay |
+| `--json` | `false` | Emit machine-readable JSON instead of the per-case lines |
+
 ## mirage version
 
 ```bash
 mirage version
 ```
 
-Prints the build version. The decision protocol the build speaks is
-version `1` and the signal spec is `1.1.0` — the same versions carried in
-every Decision, so a deployed binary can be matched to its spec revision.
+Prints the build version; it accepts no flags. The decision protocol the
+build speaks is version `1` and the signal spec is `1.1.0` — the same
+versions carried in every Decision, so a deployed binary can be matched
+to its spec revision.
 
 ## Notes for scripting
 
 - `--json` exists on `doctor`, `posture` and `replay` only; `serve` logs,
   `init` writes a file, `version` prints one line.
-- Every subcommand accepts `--config`; for `init` it selects the file to
-  write.
+- `--config` is required on `serve`, `doctor`, `posture` and `replay`;
+  on `init` it selects the file to write (default `mirage.yaml`);
+  `version` accepts none.
 - An unknown flag or subcommand is an error (exit 1), matching the
   fail-closed-at-boot discipline of the config loader.
 - Machine consumers should read the [agent

@@ -58,7 +58,7 @@ path).
 
 ## Ban parameters and renewal
 
-A ban covers a single address for 30 minutes (1,800,000 ms), with reason
+A ban covers a single address for 1,800,000 ms (30 minutes), with reason
 code = the highest-weight signal of the banning request; a weight tie
 resolves to the earliest signal in evaluation order. Bans are always
 reversible (I5). While a ban is active (protect mode, enforcement armed),

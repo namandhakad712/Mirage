@@ -50,7 +50,7 @@ divergence.
 | `internal/model` | Shared decision types, session key `sha256(ip)[:32]`, the right-to-left trusted-proxy client-IP walk (I6), never-scored/never-banned ranges, reason-text sanitizer (I7). |
 | `internal/config` | Strict YAML site config: fail-closed unknown-key rejection, every policy bound, the loopback dashboard-token requirement (I9, I11). |
 | `internal/store` | SQLite (WAL) and in-memory stores behind one interface; versioned schema with safe migration. |
-| `internal/events` | Bounded drop-oldest event queue; emission never blocks the hot path (I3). |
+| `internal/events` | Bounded event queue: when full, the newest event is dropped and counted — emission never blocks the hot path (I3); the worker's ring buffer drops the oldest instead. |
 | `internal/detect` | The SIGNALS v1.1.0 decision engine: deterministic scoring, verdict ladder, gating rules; the golden-vector parity target. |
 | `internal/decoy` | The decoy data layer: strict catalog loader, reserved-value validation, deterministic renderer, pollution suite (I8, I12–I14). |
 | `internal/enforce` | The verdict gatekeeper: per-verdict budgets and the global kill switch (I5, I9). |
@@ -125,9 +125,8 @@ lab/                 fault-injection and adversarial test lab
 tools/               vector generator, docs-site sync + integrity gates
 ```
 
-Two implementations, one spec: the Go core and the TypeScript worker must
-produce identical verdicts on the shared golden vectors. CI fails on any
-divergence.
+Two implementations, one spec — the parity rule and what it gates are
+described in [Architecture](#architecture) above.
 
 ## Status
 

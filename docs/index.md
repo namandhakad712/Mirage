@@ -15,8 +15,8 @@ order: 0
     <p class="hero-lede">
       Mirage is an open-source deception layer for your origin: every request
       is scored by eleven deterministic signals, attackers are quietly routed
-      into decoy personas, and the whole system fails open — a broken Mirage
-      never breaks your site.
+      into decoy personas, and the whole system fails open by design — when
+      Mirage fails, traffic passes to the origin unmodified.
     </p>
     <div class="hero-actions">
       <a class="btn btn-primary" href="{{ site.baseurl }}/guide/getting-started.html">Get started</a>
@@ -37,7 +37,7 @@ order: 0
     <span>ADAPTER-PROTOCOL v1</span>
     <span>DECOY-CATALOG v1</span>
     <span>20 golden vectors</span>
-    <span>AGPL-3.0</span>
+    <span>AGPL-3.0 core · Apache-2.0 worker</span>
   </div>
 </div>
 
