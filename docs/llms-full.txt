@@ -118,13 +118,20 @@ runs.
 mirage init --config mirage.yaml
 ```
 
-`mirage init` writes a minimal valid config (it also refuses decoy paths
-that collide with real routes, `/.well-known/`, robots.txt, sitemaps and
-health checks — I4). Open `mirage.yaml` and make two decisions:
+`mirage init` writes a minimal valid config: `mode: "look"` and a
+generated `dashboard_token` — those two keys only; every other key keeps
+its documented default, and init loads the written file back through
+strict validation before reporting success. Init checks nothing else —
+the decoy-catalog path rules are enforced by the catalog loader at load
+time, not by init (see
+[decoys]({{ site.baseurl }}/guide/decoys.html)). Open `mirage.yaml` and
+look at the two keys:
 
 - **`dashboard_token`** — required, and required even though the default
   `listen` is loopback: an unauthenticated local endpoint is one `curl`
-  away from a takeover. Generate one and paste it in:
+  away from a takeover. Init already generated one (crypto/rand); if you
+  hand-write the file from `mirage.example.yaml` instead, generate one
+  and paste it in:
 
   ```bash
   openssl rand -hex 32
@@ -149,20 +156,37 @@ failure is named. Add `--json` for machine-readable output (see the
 
 ## 3. Run it
 
+`serve` requires both the config and the upstream origin — there is no
+`upstream` key in the config, so the origin is always named explicitly.
+For a demo origin, serve the current directory on port 9000 in one
+terminal:
+
 ```bash
-mirage serve --config mirage.yaml
+python3 -m http.server 9000
 ```
 
-Mirage binds `listen` (default `127.0.0.1:8080`), scores every request
-that reaches it, and serves the token-guarded dashboard on the same
-address. In a second terminal, confirm the process is alive:
+Then run Mirage in front of it:
 
 ```bash
-curl -s http://127.0.0.1:8080/healthz
+mirage serve --config mirage.yaml --upstream http://127.0.0.1:9000
+```
+
+Mirage runs two servers. The proxy binds `listen` (default
+`127.0.0.1:8080`), scores every request that reaches it and forwards
+traffic to the upstream. The token-guarded dashboard binds its own
+loopback address, `--dashboard-addr` (default `127.0.0.1:8090`; non-
+loopback binds are refused at startup). `/healthz` lives on the dashboard
+mux, so the liveness probe is:
+
+```bash
+curl -s http://127.0.0.1:8090/healthz
 ```
 
 `/healthz` is the one tokenless endpoint — the load-balancer probe — with
-a fixed body and nothing else.
+a fixed body and nothing else. The dashboard is loopback-only by design:
+on a remote host, tunnel it instead of opening it —
+`ssh -L 8090:127.0.0.1:8090 you@example.com` — and browse
+`http://127.0.0.1:8090` from your workstation.
 
 ## 4. Generate a benign request and a scanner path
 
@@ -171,21 +195,36 @@ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/.env
 ```
 
+Both answer 200 from the demo origin, and neither is scored: requests
+from loopback are never scored (I6) — they produce verdict `observe`,
+fire no signals and record no session state. The two curls prove the
+proxy and the fail-open path, nothing else.
+
+Scoring engages for requests from a real remote address. Point `listen`
+at an address a second machine can reach (for example
+`listen: "192.168.1.10:8080"`), restart `serve`, then from that machine:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' http://192.168.1.10:8080/
+curl -s -o /dev/null -w '%{http_code}\n' http://192.168.1.10:8080/.env
+```
+
 Score both requests the way the engine does. The first is ordinary: a bare
 `curl` sends three headers (Host, User-Agent, Accept), which fires
 `headers_sparse` (10, medium) — under the tag threshold of 15 — so the
 verdict is `observe`. The second matches `data/scanner-paths.txt`, firing
-`scanner_path` (25, high, `SIG-101`); because a signal from the ungating
-set fired the same request, `tooling_curl` (15) fires too: request score
-25 + 15 = 40. In look mode the verdict is capped at `tag` and the action
-is always `pass` — both requests reach the origin unmodified (I1, I9).
-What changes is the record.
+`scanner_path` (25, high, `SIG-101`); that same-request signal ungates
+`tooling_curl` (15), and the sparse header set fires `headers_sparse`
+(10) too: request score 25 + 15 + 10 = 50. On the verdict ladder 50 is
+`throttle` territory, but in look mode the verdict is capped at `tag` and
+the action is always `pass` — the request reaches the origin unmodified
+(I1, I9). What changes is the record.
 
 ## 5. Read the events
 
 ```bash
 TOKEN="paste-the-dashboard_token-value"
-curl -s -H "X-Mirage-Dashboard-Token: $TOKEN" http://127.0.0.1:8080/api/events
+curl -s -H "X-Mirage-Dashboard-Token: $TOKEN" http://127.0.0.1:8090/api/events
 ```
 
 The token also rides as `Authorization: Bearer ...`. `/api/events` returns
@@ -220,6 +259,13 @@ leaves evidence (I10). This page walks the path once, then maps each step to
 its Go package.
 
 ## The path of one request
+
+The figure below traces the full lifecycle at a glance: the synchronous
+decision from the client through the adapter, engine and verdict ladder to
+the action, then the asynchronous trail from the bounded event queue through
+the store to the connectors.
+
+{% include diagrams/decision-path.html %}
 
 **1. Adapter submits a request.** An edge adapter — Go middleware, the
 Cloudflare Worker, a future plugin — builds a `model.Request`: `method`,
@@ -256,8 +302,9 @@ spoofable header (I6).
 7. Deadline check again, after enforcement wiring; on overrun the adapter
    still sees the fail-open decision.
 8. Event emission: a bounded queue write that never blocks (I3). On a full
-   queue the newest event is dropped and counted — losing evidence is better
-   than stalling a request.
+   queue the core drops the newest event and counts it — losing evidence
+   is better than stalling a request. (The TypeScript worker's ring
+   buffer drops the oldest instead; both engines keep the drop count.)
 
 **3. The adapter acts** on the returned `model.Decision`: `pass` (forward
 unmodified), `serve_decoy` (render the decoy named by `decoy_id` locally
@@ -418,6 +465,12 @@ anything a model guessed.
 | `throttle` | `request_score ≥ 40` | adapter-local throttle |
 | `ban` | `honeytoken_use` fired, OR (`decoy_lead_follow` fired AND path not protected), OR (`request_score ≥ 60` AND class `high`) | short block, only when enforcement is enabled (I9) |
 
+The ladder below stacks the five rungs with their exact thresholds, and the
+two annotations mark the rules that bound how high a verdict can climb: the
+protected-route cap and the history rule.
+
+{% include diagrams/verdict-ladder.html %}
+
 ## What history can and cannot do
 
 Session history can tag; it can never escalate past tag. A clean-looking
@@ -438,7 +491,7 @@ path).
 
 ## Ban parameters and renewal
 
-A ban covers a single address for 30 minutes (1,800,000 ms), with reason
+A ban covers a single address for 1,800,000 ms (30 minutes), with reason
 code = the highest-weight signal of the banning request; a weight tie
 resolves to the earliest signal in evaluation order. Bans are always
 reversible (I5). While a ban is active (protect mode, enforcement armed),
@@ -528,8 +581,9 @@ Both are traps inside a served decoy, at different depths:
   when that decoy is served to it.
 - A **honeytoken** is inert credential material minted into the body per
   session. The `token_alnum_24` format is deterministic:
-  `"mrg_live_" + sha256(session_key + ":" + entry_id + ":" + token_id)[:24]`
-  — so a token names its session, entry and slot without a database. Using
+  `"mrg_live_" + hex(sha256(session_key + ":" + entry_id + ":" + token_id))[:24]`
+  — the first 24 hex characters of the digest, so a token names its
+  session, entry and slot without a database. Using
   the exact string anywhere Mirage can see (Authorization header, body
   keys, query) fires `honeytoken_use` (50, high) and proves which decoy
   leaked. Every format lives in the `mrg_` namespace that no real service
@@ -601,10 +655,15 @@ entries:
         format: token_alnum_24
 ```
 
-The rules the loader enforces: paths must not collide with real routes,
-`/.well-known/**`, robots.txt, sitemaps or health checks (`mirage init`
-checks at install time); bodies are inert — no scripts, no redirects, no
-third-party links (I8, I14); hostnames come from reserved namespaces only
+The rules the catalog loader enforces at load time: entry paths are
+unique within the catalog, and a lead must not claim `/.well-known/**` or
+collide with an entry path (ids must be unique too). Staying off real
+routes, robots.txt, sitemaps and health checks is catalog-author
+discipline — the shipped catalog complies — and the engine independently
+caps protected routes at `tag`, so a colliding entry is never served
+there (I4). Beyond the paths: bodies are inert — no scripts, no
+redirects, no third-party links (I8, I14); hostnames come from reserved
+namespaces only
 (`example.com`, `.test`, `.invalid`, the RFC 5737 ranges); no real brands
 beyond technology-stack markers; no prose content, only technical artifacts
 (I13). Validate with `go test ./internal/decoy/` — changes to the shipped
@@ -853,12 +912,14 @@ also removes stale and revoked bans from providers.
 
 ## Dashboard usage
 
-The dashboard binds `listen` (loopback by default) and requires the token
-even on loopback. Reach it through an SSH tunnel, not a public bind:
+The dashboard is a separate server from the proxy: it binds
+`--dashboard-addr` (default `127.0.0.1:8090`, loopback only — non-
+loopback binds are refused) and requires the token even on loopback.
+Reach it through an SSH tunnel, not a public bind:
 
 ```bash
-ssh -L 8080:127.0.0.1:8080 you@example.com
-curl -s -H "X-Mirage-Dashboard-Token: $TOKEN" http://127.0.0.1:8080/api/status
+ssh -L 8090:127.0.0.1:8090 you@example.com
+curl -s -H "X-Mirage-Dashboard-Token: $TOKEN" http://127.0.0.1:8090/api/status
 ```
 
 Endpoints: `/healthz` (tokenless probe, fixed body), `/api/status` (mode,
@@ -1051,7 +1112,8 @@ you opt in.
 ## Can attackers detect Mirage?
 
 Over time, any fixed decoy set can be fingerprinted and skipped — stated
-in known limits, which is why packs rotate and vary per install. Decoys
+in known limits (community decoy packs are planned after 1.0; none ship
+today). Decoys
 carry no public "this is a decoy" marker (ADR-0001): safety comes from
 audience gating, noindex headers and a published security.txt contact for
 legitimate researchers.
@@ -1182,7 +1244,7 @@ Canon `protected_routes` default: `/wp-login.php`, `/wp-admin/`, `/checkout`,
 | --- | --- | --- | --- | --- | --- |
 | `enforcement.enabled` | bool | `false` | May only be `true` when `mode` is `protect`; otherwise a boot-time error | Master opt-in for enforcement | I9: even when true, the kill switch and the budgets still gate every action |
 | `enforcement.kill_switch` | bool | `false` | — | The global off-switch: while `true` no ban or throttle executes and no connector is called | Flip it when anything looks wrong; it takes effect immediately, renewal included |
-| `enforcement.ban_ttl_ms` | int | `1800000` (30 minutes) | Milliseconds | Ban TTL, single address | I5, I15: short and reversible by design |
+| `enforcement.ban_ttl_ms` | int | `1800000` — 1,800,000 ms (30 minutes) | Milliseconds | Ban TTL, single address | I5, I15: short and reversible by design |
 
 ### Budgets
 
@@ -1218,9 +1280,11 @@ time and never stored on the Config.
 ## Loading rules worth remembering
 
 - Copy the example to `mirage.yaml` (gitignored on purpose) — or generate
-  one with `mirage init`, which also refuses decoy paths colliding with
-  real routes, `/.well-known/`, robots.txt, sitemaps and health checks
-  (I4).
+  one with `mirage init`, which writes `mode: "look"` and a generated
+  `dashboard_token` (nothing else) and validates the file before
+  reporting success. The decoy-path rules — duplicate entry paths, leads
+  under `/.well-known/`, lead/entry collisions — are enforced by the
+  catalog loader at load time (I4), not by init.
 - Every violation is listed before the boot fails, so one edit can fix
   them all.
 - Validate staged changes without booting: `mirage doctor --config
@@ -1235,25 +1299,34 @@ how to choose between these values; this page only states what they are.
 > The mirage CLI: serve, doctor, init, posture, replay and version, with flags, exit codes and the --json output shapes.
 Source: reference/cli.md — https://namandhakad712.github.io/Mirage/reference/cli.html
 
-The `mirage` binary has six subcommands. One global flag applies
-everywhere: `--config FILE` selects the site config (default `mirage.yaml`
-where the command accepts it). Exit codes are uniform: **0** success,
-**1** failure or mismatch — the same convention as the repo's quality
-gates, so scripts can trust a single check.
+The `mirage` binary has six subcommands. `--config FILE` names the site
+config on every subcommand that takes one — required on `serve`, `doctor`,
+`posture` and `replay` (no default), and the file to write on `init`
+(default `mirage.yaml`); `version` takes no flags. Exit codes are
+uniform: **0** success, **1** failure or mismatch — the same convention
+as the repo's quality gates, so scripts can trust a single check.
 
 ## mirage serve
 
 ```bash
-mirage serve --config mirage.yaml
+mirage serve --config mirage.yaml --upstream http://127.0.0.1:9000
 ```
 
-Runs the core: loads and validates the config (strict — a bad config exits
-1 before serving anything), binds `listen` (default `127.0.0.1:8080`),
-scores every request that reaches it, serves decoys per mode, drives
-enforcement and connectors, and serves the token-guarded dashboard
+Runs the core: loads and validates the config (strict — a bad config
+exits 1 before serving anything), then runs two servers. The proxy binds
+`listen`, scores every request that reaches it, forwards traffic to the
+upstream, serves decoys per mode and drives enforcement and connectors.
+The token-guarded dashboard binds its own loopback address
 (`/healthz`, `/api/status`, `/api/events`, `/api/sessions`, `/api/bans`,
 `POST /api/bans/revoke`). Any internal failure during a decision answers
 `pass` to the request (I1).
+
+| Flag | Default | Meaning |
+| --- | --- | --- |
+| `--config FILE` | required | Site configuration file |
+| `--upstream URL` | required | Upstream origin URL the proxy forwards to — there is no upstream key in the config |
+| `--listen ADDR` | the config's `listen` (`127.0.0.1:8080`) | Proxy listen address |
+| `--dashboard-addr ADDR` | `127.0.0.1:8090` | Dashboard listen address — loopback only, non-loopback binds are refused |
 
 ## mirage doctor
 
@@ -1282,17 +1355,30 @@ machine form. Shape:
 otherwise. (The JSON block above shows the shape of the envelope — field
 values are illustrative.)
 
+| Flag | Default | Meaning |
+| --- | --- | --- |
+| `--config FILE` | required | Site configuration file |
+| `--json` | `false` | Emit machine-readable JSON instead of the check table |
+
 ## mirage init
 
 ```bash
 mirage init
-mirage init --config path/to/mirage.yaml
+mirage init --config path/to/mirage.yaml --force
 ```
 
-Writes a minimal valid config, including a generated dashboard token, and
-refuses decoy paths that collide with real routes, `/.well-known/`,
-robots.txt, sitemaps and health checks (I4). Exits 1 if the target exists
-or a collision is found.
+Writes a minimal valid config — `mode: "look"` and a crypto/rand
+`dashboard_token` are the only keys; every other key keeps its
+documented default — and loads the written file back through strict
+validation before reporting success. Init checks nothing else: the
+decoy-path rules are the catalog loader's, enforced when a catalog is
+loaded, not at install time. Exits 1 if the target exists (unless
+`--force`) or the generated file fails validation.
+
+| Flag | Default | Meaning |
+| --- | --- | --- |
+| `--config FILE` | `mirage.yaml` | Configuration file to write |
+| `--force` | `false` | Overwrite an existing file |
 
 ## mirage posture
 
@@ -1306,6 +1392,11 @@ state, budgets, protected routes and connector readiness, reported as the
 same `ok` / `mode` / `checks[]` envelope as doctor. Use it before moving
 up the [mode ladder]({{ site.baseurl }}/guide/modes.html) — it answers
 "what would this config actually do" without booting the server.
+
+| Flag | Default | Meaning |
+| --- | --- | --- |
+| `--config FILE` | required | Site configuration file |
+| `--json` | `false` | Emit machine-readable JSON instead of the report |
 
 ## mirage replay
 
@@ -1322,22 +1413,30 @@ counts the rest. `--json` emits the run summary — the `ok` / `mode` /
 case. This is the command for verifying a modified config or catalog
 against the executable contract before deploying.
 
+| Flag | Default | Meaning |
+| --- | --- | --- |
+| `--config FILE` | required | Site configuration file |
+| `--vectors PATH` | `spec/golden-vectors/vectors.json` | Golden vector file to replay |
+| `--json` | `false` | Emit machine-readable JSON instead of the per-case lines |
+
 ## mirage version
 
 ```bash
 mirage version
 ```
 
-Prints the build version. The decision protocol the build speaks is
-version `1` and the signal spec is `1.1.0` — the same versions carried in
-every Decision, so a deployed binary can be matched to its spec revision.
+Prints the build version; it accepts no flags. The decision protocol the
+build speaks is version `1` and the signal spec is `1.1.0` — the same
+versions carried in every Decision, so a deployed binary can be matched
+to its spec revision.
 
 ## Notes for scripting
 
 - `--json` exists on `doctor`, `posture` and `replay` only; `serve` logs,
   `init` writes a file, `version` prints one line.
-- Every subcommand accepts `--config`; for `init` it selects the file to
-  write.
+- `--config` is required on `serve`, `doctor`, `posture` and `replay`;
+  on `init` it selects the file to write (default `mirage.yaml`);
+  `version` accepts none.
 - An unknown flag or subcommand is an error (exit 1), matching the
   fail-closed-at-boot discipline of the config loader.
 - Machine consumers should read the [agent
@@ -1387,9 +1486,10 @@ degrades gracefully: signals requiring the field do not fire.
   headers are ignored entirely — an attacker must not be able to frame an
   innocent address (I6).
 - **Never-scored addresses** (verified in `data/reserved-hosts.txt` and
-  config): owner IPs, loopback (unless a dashboard token is present), CDN and
-  load-balancer ranges, allowlisted bots. Requests from them produce verdict
-  `observe` and no session state is recorded.
+  config): owner IPs, loopback, CDN and load-balancer ranges, allowlisted
+  bots — no dashboard-token exception exists (the token authenticates
+  dashboard endpoints, it does not switch scoring back on). Requests from
+  them produce verdict `observe` and no session state is recorded.
 - **Verified bot hints**: a case-insensitive user-agent substring match
   against `data/ua-verified-bots.txt` marks the request never-scored. The Go
   core additionally supports reverse-DNS plus forward confirmation for
@@ -1421,7 +1521,7 @@ Weight, class and reason code are fixed. `high` classes can escalate;
 | 5 | `path_enumeration` | 25 | high | SIG-105 | ≥ 8 **distinct unknown paths** in the trailing 60 s window. Unknown = not `/`, not a protected route, not a scanner path, not a decoy, not a decoy lead |
 | 6 | `ua_suspicious` | 15 | medium | SIG-106 | User-Agent matches `data/ua-suspicious.txt` (case-insensitive substring) |
 | 7 | `ua_rotation` | 20 | medium | SIG-107 | ≥ 4 distinct non-empty user agents from the session in the trailing 300 s **AND** at least one other signal fired this request (gated, §6) |
-| 8 | `no_cookie_persistence` | 15 | medium | SIG-108 | Request count ≥ 5 for the session, no Cookie header **ever** in the session, session cumulative score was 0 before this request, and **no other signal fired this request** (gated, §6) |
+| 8 | `no_cookie_persistence` | 15 | medium | SIG-108 | Request count ≥ 5 for the session, no Cookie header **ever** in the session, session cumulative score was 0 before this request, and **no signal earlier in evaluation order fired** (gated, §6) |
 | 9 | `headers_sparse` | 10 | medium | SIG-109 | `header_count < 4`. Fires on every sparse request |
 | 10 | `ua_missing` | 10 | medium | SIG-110 | User-Agent header absent or empty string |
 | 11 | `tooling_curl` | 15 | medium | SIG-111 | User-Agent matches `curl/` **AND** at least one of `scanner_path`, `decoy_hit`, `decoy_lead_follow`, `honeytoken_use`, `path_enumeration` fired this request earlier in evaluation order (gated, §6) |
@@ -1467,9 +1567,11 @@ These prevent the classic false positives. Each is exercised by vectors.
    300 s AND another same-request signal. A session that merely rotates UAs
    (some privacy tools do) is never scored on rotation alone.
 3. **no_cookie_persistence gating.** Fires only in an otherwise-clean
-   session (request count ≥ 5, never a cookie, cumulative score 0 before, no
-   other signal this request). Never stacks with scanner or decoy evidence —
-   those already explain the session.
+   session (request count ≥ 5, never a cookie, cumulative score 0 before,
+   no signal earlier in evaluation order this request; signals later in
+   the order — `headers_sparse`, `ua_missing`, `tooling_curl` — may
+   co-fire). Never stacks with scanner or decoy evidence — those already
+   explain the session.
 
 ## 7. Session state and expiry
 
@@ -1506,7 +1608,7 @@ but never throttles or bans on history alone.
 ```
 
 `reason_code` = the highest-weight signal of the request; `ban_ttl_ms` is
-set only on `ban` verdicts (1 800 000).
+set only on `ban` verdicts (1800000).
 
 Plain-English renderings for every reason code live in
 `data/reason-texts.txt` and must be used by every dashboard and report
@@ -1748,8 +1850,13 @@ v1 ships three personas:
 Catalog safety rules (validated by `internal/decoy` and mirrored in the
 worker):
 
-1. Paths must not collide with real routes, `/.well-known/**`, robots.txt,
-   sitemaps or health checks (`mirage init` enforces at install time).
+1. Entry paths are unique within the catalog, and a lead must not claim
+   `/.well-known/**` or collide with an entry path — the catalog loader
+   enforces those at load time (`internal/decoy`). Entries must also
+   stay off real routes, robots.txt, sitemaps and health checks; that
+   part is catalog-author discipline (the shipped catalog complies), and
+   the engine independently caps protected routes at `tag`, so a
+   colliding entry is never served there (I4).
 2. `/.env` and `/.git/config` also appear in `data/scanner-paths.txt`;
    the engine suppresses `decoy_hit` behind `scanner_path` (SIGNALS §4.2) —
    the catalog entry is still what gets **served** on `decoy_route`.
@@ -1773,9 +1880,13 @@ fixed session keys); both engines must reproduce it exactly.
   `{% raw %}{{SEED:N_B64}}{% endraw %}` — N unpadded standard-base64 chars (N must be a
   multiple of 4, derived from the first 3N/4 digest bytes).
   `{% raw %}{{SEED:N_UPPER}}{% endraw %}` — first N digest bytes folded mod 36 over A-Z0-9.
-- `{% raw %}{{TOKEN:id}}{% endraw %}` — mint a honeytoken from `data/token-formats.md`, unique
-  per (session, entry, id). Later use of the exact string anywhere Mirage
-  can see fires `honeytoken_use` (SIG-104) and proves which decoy leaked.
+- `{% raw %}{{TOKEN:id}}{% endraw %}` — mint the honeytoken for (session, entry, id) as
+  `"mrg_live_" + hex(sha256(session_key + ":" + entry_id + ":" + token_id))[:24]`
+  — the first 24 hex characters of the digest, so a token names its
+  session, entry and slot without a database. The one mintable format is
+  `token_alnum_24` in `data/token-formats.md`. Later use of the exact
+  string anywhere Mirage can see fires `honeytoken_use` (SIG-104) and
+  proves which decoy leaked.
 
 Timestamps inside bodies render from `ts_ms` of the serving request, so
 decoys never contradict themselves within a session.
@@ -2036,12 +2147,16 @@ decisions.
 
 ## Status: what runs today
 
-**Shipped and tested:** everything. The normative specs and golden vectors;
-the Go core (config, model, store, events, enforce, connectors); the
-SIGNALS v1.1.0 detection engine; the decoy data layer; the in-process HTTP
-edge middleware (`internal/edge`); the `mirage` CLI — `serve`, `doctor`,
-`init`, `posture`, `replay`, `version` (`cmd/mirage`); the fault-injection
-lab; and the Cloudflare Worker port. Every gate runs in CI on every push:
+**Shipped and tested:** the components listed in this section, each behind
+the repo's gates — nothing has been released yet, and the
+[changelog]({{ site.baseurl }}/changelog.html) tracks the work under
+`[Unreleased]`. The normative specs and golden vectors; the Go core
+(config, model, store, events, enforce, connectors); the SIGNALS v1.1.0
+detection engine; the decoy data layer; the in-process HTTP edge
+middleware (`internal/edge`); the `mirage` CLI — `serve`, `doctor`,
+`init`, `posture`, `replay`, `version` (`cmd/mirage`); the
+fault-injection lab; and the Cloudflare Worker port. Every gate runs in
+CI on every push:
 `make check` (fmt, vet, build, race tests, golden-vector cross-check,
 slop scan), the worker's npm build + test suite, and the docs-site gates.
 Run the Go core in front of an upstream with
@@ -2136,7 +2251,7 @@ binds are refused). A realistic first session:
 
 ```sh
 curl http://127.0.0.1:8080/            # 200 from your upstream
-curl http://127.0.0.1:8080/.env        # scored: scanner_path (+ tooling_curl for curl's UA)
+curl http://127.0.0.1:8080/.env        # also 200 — loopback is never scored (I6): no signal fires
 curl -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8090/api/events
 ```
 
@@ -2201,12 +2316,11 @@ Source: deploy/nginx.md — https://namandhakad712.github.io/Mirage/deploy/nginx
 This is the reference topology for self-hosted Mirage: nginx terminates
 TLS and proxies to Mirage; Mirage scores each request, serves decoys to
 already-suspicious sessions, and passes everything else to your origin
-unmodified. Two parts of this page are runnable today — the deny map and
-the reverse-proxy/X-Forwarded-For conventions — and the rest describes the
-deployment the `mirage` server binary serves when it lands with the server
-release. Nothing here is hypothetical about Mirage's side: every behavior
-described is pinned by `internal/config` (the `listen` and
-`trusted_proxies` keys), `internal/connectors` (the deny map and webhook
+unmodified. Everything on this page is runnable today — the `mirage
+serve` binary is shipped — and nothing is hypothetical about Mirage's
+side: every behavior described is pinned by `internal/config` (the
+`listen` and `trusted_proxies` keys), `internal/service` (the proxy and
+the loopback dashboard), `internal/connectors` (the deny map and webhook
 connectors) and the invariants.
 
 ## What Mirage needs in front
@@ -2278,12 +2392,15 @@ proxy can spoof client identity to Mirage; an unlisted one cannot.
 
 ## The loopback dashboard
 
-The dashboard and core API bind to `listen`, loopback by default. Reach it
-through an SSH tunnel instead of opening it:
+The dashboard is a separate server from the proxy: it binds
+`--dashboard-addr` (default `127.0.0.1:8090`), loopback only — non-
+loopback binds are refused at startup — while the proxy itself binds
+`listen`. Reach the dashboard through an SSH tunnel instead of opening
+it:
 
 ```sh
-ssh -L 8080:127.0.0.1:8080 you@example.com
-# then, on your workstation: http://127.0.0.1:8080
+ssh -L 8090:127.0.0.1:8090 you@example.com
+# then, on your workstation: http://127.0.0.1:8090
 ```
 
 The dashboard requires a token **even on loopback** — an unauthenticated
@@ -2291,7 +2408,7 @@ local endpoint is one `curl` away from a full takeover. Generate it with
 `openssl rand -hex 32` and set `dashboard_token` in `mirage.yaml`. This is
 a hard validation rule, not advice: an empty token is a boot-time error.
 
-## The deny map (runnable today)
+## The deny map
 
 The denyfile connector (`internal/connectors/denyfile.go`) maintains an
 nginx-compatible deny map: one line per address, sorted, and written
@@ -2580,7 +2697,7 @@ divergence.
 | `internal/model` | Shared decision types, session key `sha256(ip)[:32]`, the right-to-left trusted-proxy client-IP walk (I6), never-scored/never-banned ranges, reason-text sanitizer (I7). |
 | `internal/config` | Strict YAML site config: fail-closed unknown-key rejection, every policy bound, the loopback dashboard-token requirement (I9, I11). |
 | `internal/store` | SQLite (WAL) and in-memory stores behind one interface; versioned schema with safe migration. |
-| `internal/events` | Bounded drop-oldest event queue; emission never blocks the hot path (I3). |
+| `internal/events` | Bounded event queue: when full, the newest event is dropped and counted — emission never blocks the hot path (I3); the worker's ring buffer drops the oldest instead. |
 | `internal/detect` | The SIGNALS v1.1.0 decision engine: deterministic scoring, verdict ladder, gating rules; the golden-vector parity target. |
 | `internal/decoy` | The decoy data layer: strict catalog loader, reserved-value validation, deterministic renderer, pollution suite (I8, I12–I14). |
 | `internal/enforce` | The verdict gatekeeper: per-verdict budgets and the global kill switch (I5, I9). |
@@ -2655,9 +2772,8 @@ lab/                 fault-injection and adversarial test lab
 tools/               vector generator, docs-site sync + integrity gates
 ```
 
-Two implementations, one spec: the Go core and the TypeScript worker must
-produce identical verdicts on the shared golden vectors. CI fails on any
-divergence.
+Two implementations, one spec — the parity rule and what it gates are
+described in [Architecture](#architecture) above.
 
 ## Status
 
@@ -2720,6 +2836,45 @@ All notable changes to Mirage are documented here. Format follows
 [SemVer](https://semver.org/). Dates are UTC.
 
 ## [Unreleased]
+
+### Added — 2026-11-27 (docs-site elevation round)
+
+- **Docs-site elevation round** (visual + content + machine surface):
+  - Bespoke WebGL hero on the landing page — the layered mirage diamond as
+    a rotating wireframe octahedron with an inner faceted core and a soft
+    round-sprite dust field (`hero.js`, zero dependencies, ~12 KB):
+    theme-aware via CSS tokens, `prefers-reduced-motion` renders a single
+    static frame, WebGL loss/absence falls back to a static CSS diamond,
+    and the RAF loop pauses when the tab is hidden or the hero is
+    off-screen.
+  - Client-side search — deterministic build-time index
+    (`tools/build_search.py` → `search.json`, 31 pages / 287 sections,
+    anchor ids byte-verified against the rendered site): Cmd/Ctrl+K and
+    `/` dialog, ARIA combobox pattern, full keyboard navigation, grouped
+    results with match highlighting, silent self-disable if the index
+    cannot be fetched.
+  - Design-system deep pass: tokenized type scale, prose/code/table craft
+    (sticky header row, scrollable tables with no mid-word chip breaks),
+    `.callout` note/warning/danger system, unified focus-visible rings,
+    print theme — with computed WCAG-AA contrast for every text token
+    pair in both themes.
+  - Machine surface: OpenGraph/Twitter meta, `jekyll-sitemap` (inside the
+    Pages build allowlist — zero new gems), `robots.txt`, deterministic
+    PIL-generated favicon set + 1200x630 OG image
+    (`tools/gen_site_assets.py`, byte-identical on re-run).
+  - Hand-authored theme-aware SVG figures: the decision-path lifecycle
+    (architecture guide) and the verdict ladder with exact spec thresholds
+    (verdicts guide).
+  - Code-verified accuracy pass over every guide/reference/deploy page:
+    honest `serve`/`init` walkthroughs (required flags, dashboard on
+    `--dashboard-addr` 127.0.0.1:8090, loopback-never-scored demo
+    corrected), queue drop semantics unified (core drops the newest
+    event on the hot path, the Worker ring drops the oldest — the drop
+    counter is public), the honeytoken TOKEN formula pinned canonically
+    in the DECOY-CATALOG spec and mirrored verbatim, license scoping
+    (AGPL-3.0 core · Apache-2.0 worker), and an editorial note marking
+    the historical design record where it predates the shipped
+    implementation.
 
 ### Added — 2026-11-26 (server + docs-site round)
 
@@ -2950,7 +3105,7 @@ What Mirage does not do — and will not do:
   scanning, no retaliation of any kind. Passive deception only.
 - **No web pollution.** Decoys never reach search indexes, archives,
   AI-training crawlers or ordinary visitors (I12). We do not feed garbage to
-  content scrapers (I13) — we block, challenge or rate-limit them.
+  content scrapers (I13) — we block or rate-limit them.
 - **No live credentials.** Honeytokens use formats that cannot validate, or
   registered canaries owned by the site owner (I14). A decoy must never
   become someone else's security incident.
@@ -2958,7 +3113,7 @@ What Mirage does not do — and will not do:
   We never say "stops attack agents". Decoys do not stop an agent that goes
   straight to a real vulnerability. [Known limits]({{ site.baseurl }}/known-limits.html) is
   written first, not after the first critic.
-- **No paywalls on safety features.** The posture check, Watch mode, decoys
+- **No paywalls on safety features.** The posture check, look mode, decoys
   and the dashboard are free forever. Sponsorships and optional paid support
   may come later; safety does not.
 - **No phone-home.** Telemetry is off by default and stays off unless the
@@ -3039,8 +3194,10 @@ verdict degrades to observe + pass-through within the deadline budget.
 ## I4 — Protected routes
 
 Login, checkout, API prefixes and anything the owner lists are never decoyed
-or throttled by decoy logic. `mirage init` refuses decoy paths that collide
-with real routes, `/.well-known/`, robots.txt, sitemaps and health checks.
+or throttled by decoy logic: the engine caps the verdict at `tag` on any
+protected route. The decoy catalog loader separately rejects duplicate
+entry paths and leads that would claim `/.well-known/` or collide with an
+entry path.
 
 *Test hooks:* golden vectors v05/v09/v19 assert cap behavior; the pollution
 suite asserts no decoy appears on protected routes.
@@ -3117,8 +3274,8 @@ asserts zero decoy URLs; header assertions on every decoy response.
 
 Decoys are inert technical artifacts — config files, fake admin shells, error
 pages — never articles, facts or claims about real people, brands or
-products. No plausible prose pages. Content scrapers are blocked, challenged
-or rate-limited; they are never fed garbage.
+products. No plausible prose pages. Content scrapers are blocked or
+rate-limited; they are never fed garbage.
 
 *Test hooks:* catalog validation rejects prose-style decoys; brand/domain
 lint over the whole catalog.
@@ -3215,8 +3372,10 @@ first and investigated second.
 Source: known-limits.md — https://namandhakad712.github.io/Mirage/known-limits.html
 
 Before anyone else says "but it didn't stop X": here is what Mirage cannot
-do. This page is a feature, not an apology. It ships with v0.1 and grows only
-by adding measured honesty.
+do. This page is a feature, not an apology. It grows only by adding
+measured honesty — no release has shipped yet; the
+[changelog]({{ site.baseurl }}/changelog.html) tracks the work under
+`[Unreleased]`.
 
 ## Detection limits
 
@@ -3227,8 +3386,9 @@ by adding measured honesty.
   reconnaissance can stay under every threshold. We tag what we see; we do
   not see everything.
 - **Fingerprinting is possible over time.** Any fixed decoy set can be
-  learned and skipped. Mitigations — per-install seeded variation, rotating
-  packs, persona diversity — raise the cost, they do not remove it.
+  learned and skipped. Mitigations — persona diversity and per-session
+  seeded rendering today, community decoy packs planned after 1.0 —
+  raise the cost, they do not remove it.
 - **Rule-based means rule-gapped.** The engine is deterministic on purpose
   (explainable, replayable, auditable). It has no imagination. Novel
   reconnaissance patterns need new rules.
@@ -3256,7 +3416,7 @@ by adding measured honesty.
 - **Tor and VPN exits are tagged, not banned** unless the owner chooses
   otherwise.
 - **Ban budgets trade coverage for safety.** When a budget is exceeded the
-  site drops to Observe automatically. This can under-enforce during a
+  site drops back to observe-only behavior automatically. This can under-enforce during a
   deliberate flood. A bug that bans the world is worse than an attacker who
   returns.
 
@@ -3432,10 +3592,12 @@ X-Mirage-Signature: <hex(HMAC-SHA256(secret, body))>
 hex-encoded HMAC-SHA256 of the **exact request body bytes** (the same
 bytes that go on the wire), keyed by the secret. Verify before parsing,
 and never verify over re-serialized JSON — parse first and the signature
-will not match. In Python:
+will not match. In Python — pseudo-code; adapt `request.raw_body` and
+`request.headers` to your framework's request API. The HMAC logic is
+exact:
 
 ```python
-import hashlib, hmac
+import hashlib, hmac, os
 
 secret = os.environ["MIRAGE_WEBHOOK_SECRET"]     # the env var secret_env names
 body = request.raw_body                            # exact bytes, before any JSON parse
@@ -3770,6 +3932,8 @@ Environment matrix. These are design targets; each recipe is verified against th
 One protocol, many adapters. Every adapter speaks the same small, versioned Mirage Adapter Protocol: a decision request with a hard deadline, and an event emit. A conformance suite runs against each adapter, and a documented SDK lets a contributor write a new adapter in a few hundred lines. This clarifies I3: calls over loopback or a unix socket to a local process, with a hard deadline, are allowed; remote network calls are not. On timeout the adapter skips Mirage and passes the request through.
 
 Collision-proofing: `mirage init` reads the owner’s real route inventory (sitemap, framework route list, a short crawl) and refuses any decoy path that collides with a real route. Decoys never touch /.well-known/ (certificate renewal, security.txt), robots.txt, sitemap files or health-check paths. This enforces I4 automatically.
+
+*[Editorial note, added when the implementation shipped: this design record predates the code and is preserved unedited. In the shipped binary, `mirage init` writes a starter config only; the collision checks described here are enforced by the decoy catalog loader at load time (unique entry paths, leads never under `/.well-known/`, no lead/entry collision), and the engine caps real routes at `tag` (see the DECOY-CATALOG spec).]*
 
 ### 18. Charter: no internet pollution
 

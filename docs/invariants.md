@@ -38,8 +38,10 @@ verdict degrades to observe + pass-through within the deadline budget.
 ## I4 — Protected routes
 
 Login, checkout, API prefixes and anything the owner lists are never decoyed
-or throttled by decoy logic. `mirage init` refuses decoy paths that collide
-with real routes, `/.well-known/`, robots.txt, sitemaps and health checks.
+or throttled by decoy logic: the engine caps the verdict at `tag` on any
+protected route. The decoy catalog loader separately rejects duplicate
+entry paths and leads that would claim `/.well-known/` or collide with an
+entry path.
 
 *Test hooks:* golden vectors v05/v09/v19 assert cap behavior; the pollution
 suite asserts no decoy appears on protected routes.
@@ -116,8 +118,8 @@ asserts zero decoy URLs; header assertions on every decoy response.
 
 Decoys are inert technical artifacts — config files, fake admin shells, error
 pages — never articles, facts or claims about real people, brands or
-products. No plausible prose pages. Content scrapers are blocked, challenged
-or rate-limited; they are never fed garbage.
+products. No plausible prose pages. Content scrapers are blocked or
+rate-limited; they are never fed garbage.
 
 *Test hooks:* catalog validation rejects prose-style decoys; brand/domain
 lint over the whole catalog.

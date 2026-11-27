@@ -6,8 +6,10 @@ category: project
 order: 6
 ---
 Before anyone else says "but it didn't stop X": here is what Mirage cannot
-do. This page is a feature, not an apology. It ships with v0.1 and grows only
-by adding measured honesty.
+do. This page is a feature, not an apology. It grows only by adding
+measured honesty — no release has shipped yet; the
+[changelog]({{ site.baseurl }}/changelog.html) tracks the work under
+`[Unreleased]`.
 
 ## Detection limits
 
@@ -18,8 +20,9 @@ by adding measured honesty.
   reconnaissance can stay under every threshold. We tag what we see; we do
   not see everything.
 - **Fingerprinting is possible over time.** Any fixed decoy set can be
-  learned and skipped. Mitigations — per-install seeded variation, rotating
-  packs, persona diversity — raise the cost, they do not remove it.
+  learned and skipped. Mitigations — persona diversity and per-session
+  seeded rendering today, community decoy packs planned after 1.0 —
+  raise the cost, they do not remove it.
 - **Rule-based means rule-gapped.** The engine is deterministic on purpose
   (explainable, replayable, auditable). It has no imagination. Novel
   reconnaissance patterns need new rules.
@@ -47,7 +50,7 @@ by adding measured honesty.
 - **Tor and VPN exits are tagged, not banned** unless the owner chooses
   otherwise.
 - **Ban budgets trade coverage for safety.** When a budget is exceeded the
-  site drops to Observe automatically. This can under-enforce during a
+  site drops back to observe-only behavior automatically. This can under-enforce during a
   deliberate flood. A bug that bans the world is worse than an attacker who
   returns.
 

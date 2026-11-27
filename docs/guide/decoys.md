@@ -42,8 +42,9 @@ Both are traps inside a served decoy, at different depths:
   when that decoy is served to it.
 - A **honeytoken** is inert credential material minted into the body per
   session. The `token_alnum_24` format is deterministic:
-  `"mrg_live_" + sha256(session_key + ":" + entry_id + ":" + token_id)[:24]`
-  — so a token names its session, entry and slot without a database. Using
+  `"mrg_live_" + hex(sha256(session_key + ":" + entry_id + ":" + token_id))[:24]`
+  — the first 24 hex characters of the digest, so a token names its
+  session, entry and slot without a database. Using
   the exact string anywhere Mirage can see (Authorization header, body
   keys, query) fires `honeytoken_use` (50, high) and proves which decoy
   leaked. Every format lives in the `mrg_` namespace that no real service
@@ -115,10 +116,15 @@ entries:
         format: token_alnum_24
 ```
 
-The rules the loader enforces: paths must not collide with real routes,
-`/.well-known/**`, robots.txt, sitemaps or health checks (`mirage init`
-checks at install time); bodies are inert — no scripts, no redirects, no
-third-party links (I8, I14); hostnames come from reserved namespaces only
+The rules the catalog loader enforces at load time: entry paths are
+unique within the catalog, and a lead must not claim `/.well-known/**` or
+collide with an entry path (ids must be unique too). Staying off real
+routes, robots.txt, sitemaps and health checks is catalog-author
+discipline — the shipped catalog complies — and the engine independently
+caps protected routes at `tag`, so a colliding entry is never served
+there (I4). Beyond the paths: bodies are inert — no scripts, no
+redirects, no third-party links (I8, I14); hostnames come from reserved
+namespaces only
 (`example.com`, `.test`, `.invalid`, the RFC 5737 ranges); no real brands
 beyond technology-stack markers; no prose content, only technical artifacts
 (I13). Validate with `go test ./internal/decoy/` — changes to the shipped

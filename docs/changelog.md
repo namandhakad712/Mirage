@@ -12,6 +12,45 @@ All notable changes to Mirage are documented here. Format follows
 
 ## [Unreleased]
 
+### Added — 2026-11-27 (docs-site elevation round)
+
+- **Docs-site elevation round** (visual + content + machine surface):
+  - Bespoke WebGL hero on the landing page — the layered mirage diamond as
+    a rotating wireframe octahedron with an inner faceted core and a soft
+    round-sprite dust field (`hero.js`, zero dependencies, ~12 KB):
+    theme-aware via CSS tokens, `prefers-reduced-motion` renders a single
+    static frame, WebGL loss/absence falls back to a static CSS diamond,
+    and the RAF loop pauses when the tab is hidden or the hero is
+    off-screen.
+  - Client-side search — deterministic build-time index
+    (`tools/build_search.py` → `search.json`, 31 pages / 287 sections,
+    anchor ids byte-verified against the rendered site): Cmd/Ctrl+K and
+    `/` dialog, ARIA combobox pattern, full keyboard navigation, grouped
+    results with match highlighting, silent self-disable if the index
+    cannot be fetched.
+  - Design-system deep pass: tokenized type scale, prose/code/table craft
+    (sticky header row, scrollable tables with no mid-word chip breaks),
+    `.callout` note/warning/danger system, unified focus-visible rings,
+    print theme — with computed WCAG-AA contrast for every text token
+    pair in both themes.
+  - Machine surface: OpenGraph/Twitter meta, `jekyll-sitemap` (inside the
+    Pages build allowlist — zero new gems), `robots.txt`, deterministic
+    PIL-generated favicon set + 1200x630 OG image
+    (`tools/gen_site_assets.py`, byte-identical on re-run).
+  - Hand-authored theme-aware SVG figures: the decision-path lifecycle
+    (architecture guide) and the verdict ladder with exact spec thresholds
+    (verdicts guide).
+  - Code-verified accuracy pass over every guide/reference/deploy page:
+    honest `serve`/`init` walkthroughs (required flags, dashboard on
+    `--dashboard-addr` 127.0.0.1:8090, loopback-never-scored demo
+    corrected), queue drop semantics unified (core drops the newest
+    event on the hot path, the Worker ring drops the oldest — the drop
+    counter is public), the honeytoken TOKEN formula pinned canonically
+    in the DECOY-CATALOG spec and mirrored verbatim, license scoping
+    (AGPL-3.0 core · Apache-2.0 worker), and an editorial note marking
+    the historical design record where it predates the shipped
+    implementation.
+
 ### Added — 2026-11-26 (server + docs-site round)
 
 - **Go edge middleware (`internal/edge`)**: the in-process HTTP adapter —

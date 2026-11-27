@@ -2,12 +2,14 @@
 # real service. Two guarantees:
 #   1. The mrg_ namespace is issued by no real provider.
 #   2. Any URL/host/address uses reserved values from reserved-hosts.txt.
-# Minting is seeded (DECOY-CATALOG §4): sha256(session_key + entry_id + token_id).
+# Minting is canon (DECOY-CATALOG §4): "mrg_live_" +
+# hex(sha256(session_key + ":" + entry_id + ":" + token_id))[:24].
 
 format: token_alnum_24
-template: mrg_live_{{24_ALNUM}}
+mint: "mrg_live_" + hex(sha256(session_key + ":" + entry_id + ":" + token_id))[:24]
+template: mrg_live_{{24_HEX}}
 inert-because: "No service issues mrg_live_ keys; the mrg_ namespace is reserved by this project."
-example: mrg_live_9k2mf7xq4wbvt1z6n8p3rds0
+example: mrg_live_2dba9aa7af193d97cf00f64b
 
 format: token_bearer_32
 template: mrg_bearer_{{32_ALNUM}}

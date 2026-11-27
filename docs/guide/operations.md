@@ -55,12 +55,14 @@ also removes stale and revoked bans from providers.
 
 ## Dashboard usage
 
-The dashboard binds `listen` (loopback by default) and requires the token
-even on loopback. Reach it through an SSH tunnel, not a public bind:
+The dashboard is a separate server from the proxy: it binds
+`--dashboard-addr` (default `127.0.0.1:8090`, loopback only — non-
+loopback binds are refused) and requires the token even on loopback.
+Reach it through an SSH tunnel, not a public bind:
 
 ```bash
-ssh -L 8080:127.0.0.1:8080 you@example.com
-curl -s -H "X-Mirage-Dashboard-Token: $TOKEN" http://127.0.0.1:8080/api/status
+ssh -L 8090:127.0.0.1:8090 you@example.com
+curl -s -H "X-Mirage-Dashboard-Token: $TOKEN" http://127.0.0.1:8090/api/status
 ```
 
 Endpoints: `/healthz` (tokenless probe, fixed body), `/api/status` (mode,

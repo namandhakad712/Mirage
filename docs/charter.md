@@ -27,7 +27,7 @@ What Mirage does not do — and will not do:
   scanning, no retaliation of any kind. Passive deception only.
 - **No web pollution.** Decoys never reach search indexes, archives,
   AI-training crawlers or ordinary visitors (I12). We do not feed garbage to
-  content scrapers (I13) — we block, challenge or rate-limit them.
+  content scrapers (I13) — we block or rate-limit them.
 - **No live credentials.** Honeytokens use formats that cannot validate, or
   registered canaries owned by the site owner (I14). A decoy must never
   become someone else's security incident.
@@ -35,7 +35,7 @@ What Mirage does not do — and will not do:
   We never say "stops attack agents". Decoys do not stop an agent that goes
   straight to a real vulnerability. [Known limits]({{ site.baseurl }}/known-limits.html) is
   written first, not after the first critic.
-- **No paywalls on safety features.** The posture check, Watch mode, decoys
+- **No paywalls on safety features.** The posture check, look mode, decoys
   and the dashboard are free forever. Sponsorships and optional paid support
   may come later; safety does not.
 - **No phone-home.** Telemetry is off by default and stays off unless the

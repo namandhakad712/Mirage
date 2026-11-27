@@ -32,6 +32,12 @@ anything a model guessed.
 | `throttle` | `request_score ≥ 40` | adapter-local throttle |
 | `ban` | `honeytoken_use` fired, OR (`decoy_lead_follow` fired AND path not protected), OR (`request_score ≥ 60` AND class `high`) | short block, only when enforcement is enabled (I9) |
 
+The ladder below stacks the five rungs with their exact thresholds, and the
+two annotations mark the rules that bound how high a verdict can climb: the
+protected-route cap and the history rule.
+
+{% include diagrams/verdict-ladder.html %}
+
 ## What history can and cannot do
 
 Session history can tag; it can never escalate past tag. A clean-looking
@@ -52,7 +58,7 @@ path).
 
 ## Ban parameters and renewal
 
-A ban covers a single address for 30 minutes (1,800,000 ms), with reason
+A ban covers a single address for 1,800,000 ms (30 minutes), with reason
 code = the highest-weight signal of the banning request; a weight tie
 resolves to the earliest signal in evaluation order. Bans are always
 reversible (I5). While a ban is active (protect mode, enforcement armed),

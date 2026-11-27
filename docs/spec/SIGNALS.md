@@ -43,9 +43,10 @@ degrades gracefully: signals requiring the field do not fire.
   headers are ignored entirely — an attacker must not be able to frame an
   innocent address (I6).
 - **Never-scored addresses** (verified in `data/reserved-hosts.txt` and
-  config): owner IPs, loopback (unless a dashboard token is present), CDN and
-  load-balancer ranges, allowlisted bots. Requests from them produce verdict
-  `observe` and no session state is recorded.
+  config): owner IPs, loopback, CDN and load-balancer ranges, allowlisted
+  bots — no dashboard-token exception exists (the token authenticates
+  dashboard endpoints, it does not switch scoring back on). Requests from
+  them produce verdict `observe` and no session state is recorded.
 - **Verified bot hints**: a case-insensitive user-agent substring match
   against `data/ua-verified-bots.txt` marks the request never-scored. The Go
   core additionally supports reverse-DNS plus forward confirmation for
@@ -77,7 +78,7 @@ Weight, class and reason code are fixed. `high` classes can escalate;
 | 5 | `path_enumeration` | 25 | high | SIG-105 | ≥ 8 **distinct unknown paths** in the trailing 60 s window. Unknown = not `/`, not a protected route, not a scanner path, not a decoy, not a decoy lead |
 | 6 | `ua_suspicious` | 15 | medium | SIG-106 | User-Agent matches `data/ua-suspicious.txt` (case-insensitive substring) |
 | 7 | `ua_rotation` | 20 | medium | SIG-107 | ≥ 4 distinct non-empty user agents from the session in the trailing 300 s **AND** at least one other signal fired this request (gated, §6) |
-| 8 | `no_cookie_persistence` | 15 | medium | SIG-108 | Request count ≥ 5 for the session, no Cookie header **ever** in the session, session cumulative score was 0 before this request, and **no other signal fired this request** (gated, §6) |
+| 8 | `no_cookie_persistence` | 15 | medium | SIG-108 | Request count ≥ 5 for the session, no Cookie header **ever** in the session, session cumulative score was 0 before this request, and **no signal earlier in evaluation order fired** (gated, §6) |
 | 9 | `headers_sparse` | 10 | medium | SIG-109 | `header_count < 4`. Fires on every sparse request |
 | 10 | `ua_missing` | 10 | medium | SIG-110 | User-Agent header absent or empty string |
 | 11 | `tooling_curl` | 15 | medium | SIG-111 | User-Agent matches `curl/` **AND** at least one of `scanner_path`, `decoy_hit`, `decoy_lead_follow`, `honeytoken_use`, `path_enumeration` fired this request earlier in evaluation order (gated, §6) |
@@ -123,9 +124,11 @@ These prevent the classic false positives. Each is exercised by vectors.
    300 s AND another same-request signal. A session that merely rotates UAs
    (some privacy tools do) is never scored on rotation alone.
 3. **no_cookie_persistence gating.** Fires only in an otherwise-clean
-   session (request count ≥ 5, never a cookie, cumulative score 0 before, no
-   other signal this request). Never stacks with scanner or decoy evidence —
-   those already explain the session.
+   session (request count ≥ 5, never a cookie, cumulative score 0 before,
+   no signal earlier in evaluation order this request; signals later in
+   the order — `headers_sparse`, `ua_missing`, `tooling_curl` — may
+   co-fire). Never stacks with scanner or decoy evidence — those already
+   explain the session.
 
 ## 7. Session state and expiry
 
@@ -162,7 +165,7 @@ but never throttles or bans on history alone.
 ```
 
 `reason_code` = the highest-weight signal of the request; `ban_ttl_ms` is
-set only on `ban` verdicts (1 800 000).
+set only on `ban` verdicts (1800000).
 
 Plain-English renderings for every reason code live in
 `data/reason-texts.txt` and must be used by every dashboard and report
