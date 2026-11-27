@@ -3894,6 +3894,8 @@ One protocol, many adapters. Every adapter speaks the same small, versioned Mira
 
 Collision-proofing: `mirage init` reads the owner’s real route inventory (sitemap, framework route list, a short crawl) and refuses any decoy path that collides with a real route. Decoys never touch /.well-known/ (certificate renewal, security.txt), robots.txt, sitemap files or health-check paths. This enforces I4 automatically.
 
+*[Editorial note, added when the implementation shipped: this design record predates the code and is preserved unedited. In the shipped binary, `mirage init` writes a starter config only; the collision checks described here are enforced by the decoy catalog loader at load time (unique entry paths, leads never under `/.well-known/`, no lead/entry collision), and the engine caps real routes at `tag` (see the DECOY-CATALOG spec).]*
+
 ### 18. Charter: no internet pollution
 
 My reading of ‘no internet poisoning’: Mirage must not pollute the public web, search indexes, AI training data, shared blocklists or third-party systems. We deter attackers without making the internet worse. New invariants:
