@@ -43,7 +43,8 @@ runs.
 ## 2. Write a minimal config
 
 ```bash
-mirage init --config mirage.yaml
+make build    # emits ./bin/mirage — nothing is installed to PATH
+./bin/mirage init --config mirage.yaml
 ```
 
 `mirage init` writes a minimal valid config: `mode: "look"` and a
@@ -75,7 +76,7 @@ boot-time error, never a silently disabled control.
 Validate before running:
 
 ```bash
-mirage doctor --config mirage.yaml
+./bin/mirage doctor --config mirage.yaml
 ```
 
 Exit 0 means every check passed; exit 1 means at least one failed, and the
@@ -96,7 +97,7 @@ python3 -m http.server 9000
 Then run Mirage in front of it:
 
 ```bash
-mirage serve --config mirage.yaml --upstream http://127.0.0.1:9000
+./bin/mirage serve --config mirage.yaml --upstream http://127.0.0.1:9000
 ```
 
 Mirage runs two servers. The proxy binds `listen` (default
@@ -123,10 +124,11 @@ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/.env
 ```
 
-Both answer 200 from the demo origin, and neither is scored: requests
-from loopback are never scored (I6) — they produce verdict `observe`,
-fire no signals and record no session state. The two curls prove the
-proxy and the fail-open path, nothing else.
+`/` answers 200 and `/.env` answers 404 — the proxy mirrors whatever the
+demo origin says, and neither request is scored: requests from loopback
+are never scored (I6) — they produce verdict `observe`, fire no signals
+and record no session state. The two curls prove the proxy and the
+fail-open path, nothing else.
 
 Scoring engages for requests from a real remote address. Point `listen`
 at an address a second machine can reach (for example

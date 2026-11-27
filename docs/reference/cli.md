@@ -51,12 +51,21 @@ machine form. Shape:
 {
   "ok": true,
   "mode": "look",
+  "spec_version": "1.1.0",
   "checks": [
-    {"name": "dashboard_token", "status": "pass", "detail": "present"},
-    {"name": "protected_routes", "status": "pass", "detail": "5 routes"}
+    {"name": "config", "ok": true, "detail": "strict load"},
+    {"name": "engine data files", "ok": true, "detail": "loaded"},
+    {"name": "decoy catalog", "ok": true, "detail": "3 personas / 6 entries"},
+    {"name": "store", "ok": true, "detail": "sqlite ok"},
+    {"name": "connectors", "ok": true, "detail": "env resolved"},
+    {"name": "kill switch", "ok": true, "detail": "off"}
   ]
 }
 ```
+
+The check names are real for a default config; the `detail` strings are
+illustrative. The shape is exact: `ok`, `mode`, `spec_version`, and
+`checks[]` of `{name, ok, detail}`.
 
 `ok` is true only when every check passed; the process exits 0 on ok, 1
 otherwise. (The JSON block above shows the shape of the envelope — field
@@ -95,8 +104,10 @@ mirage posture --config mirage.yaml --json
 ```
 
 Reviews the site's effective posture from its config: mode, enforcement
-state, budgets, protected routes and connector readiness, reported as the
-same `ok` / `mode` / `checks[]` envelope as doctor. Use it before moving
+state, budgets, protected routes and connector readiness. `--json` emits
+`{"mode", "warnings", "checks": [{"name", "value"}]}` — there is no `ok`
+key: any config that loads and validates exits 0, and `warnings` are
+advisory. Use it before moving
 up the [mode ladder]({{ site.baseurl }}/guide/modes.html) — it answers
 "what would this config actually do" without booting the server.
 
@@ -115,9 +126,9 @@ mirage replay --config mirage.yaml --vectors path/to/cases.json --json
 Replays a vector file through the real engine and config, comparing every
 expected field (signals, verdict, score, reason code) the way the test
 suites do. Exit 0 only on full parity; exit 1 names the first mismatch and
-counts the rest. `--json` emits the run summary — the `ok` / `mode` /
-`checks[]` envelope, with the vector run reported as checks covering each
-case. This is the command for verifying a modified config or catalog
+counts the rest. `--json` emits `{"ok", "total", "passed", "failed",
+"cases"}` — one entry per case with its first divergence. This is the
+command for verifying a modified config or catalog
 against the executable contract before deploying.
 
 | Flag | Default | Meaning |

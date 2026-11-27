@@ -23,7 +23,7 @@ All notable changes to Mirage are documented here. Format follows
     and the RAF loop pauses when the tab is hidden or the hero is
     off-screen.
   - Client-side search — deterministic build-time index
-    (`tools/build_search.py` → `search.json`, 31 pages / 287 sections,
+    (`tools/build_search.py` → `search.json`, 31 pages / 288 sections,
     anchor ids byte-verified against the rendered site): Cmd/Ctrl+K and
     `/` dialog, ARIA combobox pattern, full keyboard navigation, grouped
     results with match highlighting, silent self-disable if the index

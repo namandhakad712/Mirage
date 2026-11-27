@@ -115,7 +115,7 @@ These prevent the classic false positives. Each is exercised by vectors.
    NOT ungate it. Prior session score does NOT ungate it. Rationale: `curl/`
    appears in legitimate API checks and health probes.
 2. **ua_rotation gating.** Requires ≥ 4 distinct user agents in the trailing
-   300 s AND another same-request signal. A session that merely rotates UAs
+   300 s AND a signal from 1–5 in the same request. A session that merely rotates UAs
    (some privacy tools do) is never scored on rotation alone.
 3. **no_cookie_persistence gating.** Fires only in an otherwise-clean
    session (request count ≥ 5, never a cookie, cumulative score 0 before,

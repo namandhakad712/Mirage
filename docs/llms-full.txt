@@ -115,7 +115,8 @@ runs.
 ## 2. Write a minimal config
 
 ```bash
-mirage init --config mirage.yaml
+make build    # emits ./bin/mirage — nothing is installed to PATH
+./bin/mirage init --config mirage.yaml
 ```
 
 `mirage init` writes a minimal valid config: `mode: "look"` and a
@@ -147,7 +148,7 @@ boot-time error, never a silently disabled control.
 Validate before running:
 
 ```bash
-mirage doctor --config mirage.yaml
+./bin/mirage doctor --config mirage.yaml
 ```
 
 Exit 0 means every check passed; exit 1 means at least one failed, and the
@@ -168,7 +169,7 @@ python3 -m http.server 9000
 Then run Mirage in front of it:
 
 ```bash
-mirage serve --config mirage.yaml --upstream http://127.0.0.1:9000
+./bin/mirage serve --config mirage.yaml --upstream http://127.0.0.1:9000
 ```
 
 Mirage runs two servers. The proxy binds `listen` (default
@@ -195,10 +196,11 @@ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/.env
 ```
 
-Both answer 200 from the demo origin, and neither is scored: requests
-from loopback are never scored (I6) — they produce verdict `observe`,
-fire no signals and record no session state. The two curls prove the
-proxy and the fail-open path, nothing else.
+`/` answers 200 and `/.env` answers 404 — the proxy mirrors whatever the
+demo origin says, and neither request is scored: requests from loopback
+are never scored (I6) — they produce verdict `observe`, fire no signals
+and record no session state. The two curls prove the proxy and the
+fail-open path, nothing else.
 
 Scoring engages for requests from a real remote address. Point `listen`
 at an address a second machine can reach (for example
@@ -390,7 +392,7 @@ explains the request. `decoy_lead_follow` (40) means the session asked for a
 path like `/storage/logs/laravel-staging.log` that only ever appeared inside
 a decoy it was served — near-certain evidence of a scout reading the bait.
 `honeytoken_use` (50) means a minted fake credential such as
-`mrg_live_9k2mf7xq4wbvt1z6n8p3rds0` appeared in an Authorization header,
+`mrg_live_9f2ab04c1d7e83a5c60214bd` appeared in an Authorization header,
 body or query — near-certain evidence, and it names exactly which decoy
 leaked. `path_enumeration` (25) fires on the eighth distinct *unknown* path
 inside 60 seconds; unknown excludes `/`, protected routes, scanner paths,
@@ -1208,7 +1210,7 @@ at boot and open at request time (I1).
 | --- | --- | --- | --- | --- | --- |
 | `mode` | string | `"look"` | One of `look`, `tripwires`, `protect`; anything else is rejected at boot | The integration ladder (see [modes]({{ site.baseurl }}/guide/modes.html)) | I9: observe by default; enforcement needs more than the mode |
 | `site` | string | `""` | Free text | Site name or origin URL used in dashboards and reports | Identification only |
-| `listen` | string | `"127.0.0.1:8080"` | Valid address | The address the core API and dashboard bind | Loopback by default; the dashboard is meant for a local proxy or SSH tunnel, not the public internet |
+| `listen` | string | `"127.0.0.1:8080"` | Valid address | The address the proxy binds | Loopback by default; the dashboard never binds `listen` — it is a separate loopback server on `--dashboard-addr` |
 | `trusted_proxies` | list of CIDR | none (socket address only) | Every entry must parse as a CIDR or boot fails | Proxies whose `X-Forwarded-For` chain is trusted; walked right-to-left, the first non-trusted address is the client | I6: an unlisted peer's forwarding headers are ignored entirely, so an attacker cannot frame an innocent address. List ONLY proxies you control |
 | `dashboard_token` | string | required | Must not be empty — a hard validation rule, not advice | The token guarding every dashboard endpoint except `/healthz` | An unauthenticated local endpoint is one `curl` away from a takeover. Generate with `openssl rand -hex 32`. The one secret carried inline; the loader ships `Redacted()` for safe logging (I11) |
 | `owner_ips` | list of CIDR | none | Every entry must parse as a CIDR | Ranges that are never scored and never banned (office egress, VPN, load balancer) | I6, I15: requests from them produce verdict `observe` and record no session state |
@@ -1344,12 +1346,21 @@ machine form. Shape:
 {
   "ok": true,
   "mode": "look",
+  "spec_version": "1.1.0",
   "checks": [
-    {"name": "dashboard_token", "status": "pass", "detail": "present"},
-    {"name": "protected_routes", "status": "pass", "detail": "5 routes"}
+    {"name": "config", "ok": true, "detail": "strict load"},
+    {"name": "engine data files", "ok": true, "detail": "loaded"},
+    {"name": "decoy catalog", "ok": true, "detail": "3 personas / 6 entries"},
+    {"name": "store", "ok": true, "detail": "sqlite ok"},
+    {"name": "connectors", "ok": true, "detail": "env resolved"},
+    {"name": "kill switch", "ok": true, "detail": "off"}
   ]
 }
 ```
+
+The check names are real for a default config; the `detail` strings are
+illustrative. The shape is exact: `ok`, `mode`, `spec_version`, and
+`checks[]` of `{name, ok, detail}`.
 
 `ok` is true only when every check passed; the process exits 0 on ok, 1
 otherwise. (The JSON block above shows the shape of the envelope — field
@@ -1388,8 +1399,10 @@ mirage posture --config mirage.yaml --json
 ```
 
 Reviews the site's effective posture from its config: mode, enforcement
-state, budgets, protected routes and connector readiness, reported as the
-same `ok` / `mode` / `checks[]` envelope as doctor. Use it before moving
+state, budgets, protected routes and connector readiness. `--json` emits
+`{"mode", "warnings", "checks": [{"name", "value"}]}` — there is no `ok`
+key: any config that loads and validates exits 0, and `warnings` are
+advisory. Use it before moving
 up the [mode ladder]({{ site.baseurl }}/guide/modes.html) — it answers
 "what would this config actually do" without booting the server.
 
@@ -1408,9 +1421,9 @@ mirage replay --config mirage.yaml --vectors path/to/cases.json --json
 Replays a vector file through the real engine and config, comparing every
 expected field (signals, verdict, score, reason code) the way the test
 suites do. Exit 0 only on full parity; exit 1 names the first mismatch and
-counts the rest. `--json` emits the run summary — the `ok` / `mode` /
-`checks[]` envelope, with the vector run reported as checks covering each
-case. This is the command for verifying a modified config or catalog
+counts the rest. `--json` emits `{"ok", "total", "passed", "failed",
+"cases"}` — one entry per case with its first divergence. This is the
+command for verifying a modified config or catalog
 against the executable contract before deploying.
 
 | Flag | Default | Meaning |
@@ -1564,7 +1577,7 @@ These prevent the classic false positives. Each is exercised by vectors.
    NOT ungate it. Prior session score does NOT ungate it. Rationale: `curl/`
    appears in legitimate API checks and health probes.
 2. **ua_rotation gating.** Requires ≥ 4 distinct user agents in the trailing
-   300 s AND another same-request signal. A session that merely rotates UAs
+   300 s AND a signal from 1–5 in the same request. A session that merely rotates UAs
    (some privacy tools do) is never scored on rotation alone.
 3. **no_cookie_persistence gating.** Fires only in an otherwise-clean
    session (request count ≥ 5, never a cookie, cumulative score 0 before,
@@ -2242,6 +2255,13 @@ silently disable a security control.
 ./bin/mirage serve   --config mirage.yaml --upstream http://127.0.0.1:9000
 ```
 
+The proxy forwards everything to `--upstream`; with no origin of your
+own yet, give it a demo one in a second terminal:
+
+```sh
+python3 -m http.server 9000
+```
+
 `serve` composes the whole stack — store, engine, catalog, queue,
 gatekeeper, connectors — into the edge middleware: benign traffic proxies
 through to the upstream, scanner paths are answered with persona decoys
@@ -2250,8 +2270,9 @@ loopback at `--dashboard-addr` (default `127.0.0.1:8090`; non-loopback
 binds are refused). A realistic first session:
 
 ```sh
-curl http://127.0.0.1:8080/            # 200 from your upstream
-curl http://127.0.0.1:8080/.env        # also 200 — loopback is never scored (I6): no signal fires
+curl http://127.0.0.1:8080/            # 200 — the proxy answers with your origin's page
+curl http://127.0.0.1:8080/.env        # 404 — whatever your origin answers, mirrored unscored
+TOKEN=$(grep dashboard_token mirage.yaml | sed 's/.*: *"\{0,1\}//; s/"\{0,1\} *$//')
 curl -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8090/api/events
 ```
 
@@ -2848,7 +2869,7 @@ All notable changes to Mirage are documented here. Format follows
     and the RAF loop pauses when the tab is hidden or the hero is
     off-screen.
   - Client-side search — deterministic build-time index
-    (`tools/build_search.py` → `search.json`, 31 pages / 287 sections,
+    (`tools/build_search.py` → `search.json`, 31 pages / 288 sections,
     anchor ids byte-verified against the rendered site): Cmd/Ctrl+K and
     `/` dialog, ARIA combobox pattern, full keyboard navigation, grouped
     results with match highlighting, silent self-disable if the index
@@ -4478,9 +4499,10 @@ input.
 
 ## Machine-readable CLI output
 
-`mirage doctor`, `mirage posture` and `mirage replay` emit `--json`: an
-`ok` boolean, the config's `mode`, and a `checks` array of `{name,
-status, detail}` — see the
+`mirage doctor`, `mirage posture` and `mirage replay` emit `--json`,
+each with its own envelope — doctor `{ok, mode, spec_version, checks:
+[{name, ok, detail}]}`, posture `{mode, warnings, checks: [{name,
+value}]}`, replay `{ok, total, passed, failed, cases}` — see the
 [CLI reference]({{ site.baseurl }}/reference/cli.html) for the exact
 envelope and exit codes (0 ok, 1 failure or mismatch).
 
