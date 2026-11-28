@@ -1,0 +1,539 @@
+/* ============================================================================
+   Verdict playground (docs/playground.md) — styles for the interactive
+   simulator. Token-only, like every component on the site: no raw colors,
+   both themes hold by construction because every value reads a custom
+   property from docs/assets/css/main.css. Class prefix "sim-" so nothing
+   collides with the design system. The mono plates, hairlines and
+   uppercase micro labels mirror the SVG diagram plates (verdict-ladder,
+   decision-path): this page reads as part of the same manual.
+   ========================================================================== */
+
+.sim-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  margin: 26px 0 10px;
+}
+
+.sim-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px 18px;
+}
+
+.sim-plate {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.sim-plate code {
+  font-size: var(--text-2xs);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+/* ---------- Composer: fields, chips, toggles ---------- */
+
+.sim-group {
+  margin: 0 0 14px;
+  padding: 0 0 14px;
+  border-bottom: 1px solid var(--border);
+}
+.sim-group:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.sim-legend {
+  margin: 0 0 8px;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.sim-field {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 10px;
+}
+.sim-field:last-child {
+  margin-bottom: 0;
+}
+.sim-label {
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+.sim-label .sim-hint {
+  color: var(--faint);
+  font-size: var(--text-xs);
+}
+
+.sim-input,
+.sim-select {
+  width: 100%;
+  padding: 7px 10px;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+.sim-select {
+  font-family: var(--font-sans);
+}
+.sim-input:focus-visible,
+.sim-select:focus-visible,
+.sim-chip:focus-visible,
+.sim-btn:focus-visible,
+.sim-step:focus-visible {
+  outline: 2px solid var(--accent-line);
+  outline-offset: 1px;
+}
+.sim-input::placeholder {
+  color: var(--faint);
+}
+
+.sim-range-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+.sim-range {
+  width: 100%;
+  accent-color: var(--accent);
+}
+.sim-range-value {
+  min-width: 2.25rem;
+  padding: 2px 6px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-strong);
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: var(--radius-sm);
+}
+
+.sim-chipbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.sim-chip {
+  padding: 3px 9px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.sim-chip:hover {
+  color: var(--text-strong);
+  border-color: var(--accent-line);
+}
+.sim-chip[aria-pressed="true"] {
+  color: var(--accent-strong);
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.sim-switch {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: var(--text-sm);
+  color: var(--muted);
+  cursor: pointer;
+}
+.sim-switch:last-child {
+  margin-bottom: 0;
+}
+.sim-switch input {
+  accent-color: var(--accent);
+  margin: 0;
+}
+.sim-switch .sim-hint {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--faint);
+}
+
+.sim-actions {
+  margin-top: 14px;
+}
+
+/* ---------- Decision column ---------- */
+
+.sim-decision {
+  display: grid;
+  gap: 14px;
+}
+.sim-sub {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px 16px;
+}
+
+.sim-kv {
+  display: grid;
+  grid-template-columns: minmax(9.5rem, max-content) minmax(0, 1fr);
+  gap: 5px 16px;
+  margin: 0;
+}
+.sim-kv dt {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  color: var(--faint);
+}
+.sim-kv dd {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.sim-kv dd code,
+.sim-note code,
+.sim-reqline code,
+.sim-cmp code {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--code-text);
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 3px;
+  padding: 0 4px;
+  overflow-wrap: anywhere;
+}
+
+.sim-note {
+  margin: 8px 0 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--muted);
+}
+.sim-dim {
+  color: var(--faint);
+}
+.sim-flag {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--amber);
+  border: 1px solid var(--amber);
+  border-radius: 3px;
+  padding: 0 4px;
+  background: var(--amber-soft);
+}
+
+/* Fired signals: mono rows, weight and class on the right. */
+.sim-fired {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.sim-fired li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 4px 8px;
+  font-size: var(--text-sm);
+  background: var(--accent-soft);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.sim-fired li code {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--accent-strong);
+}
+.sim-fired li strong {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-strong);
+  overflow-wrap: anywhere;
+}
+.sim-w {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-strong);
+  white-space: nowrap;
+}
+.sim-c {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+/* Gated-off signals: dim one-liners under a collapsible plate. */
+.sim-gated {
+  margin-top: 10px;
+  border-top: 1px dashed var(--border);
+  padding-top: 8px;
+}
+.sim-gated summary {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--faint);
+  cursor: pointer;
+}
+.sim-gated ul {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 3px;
+}
+.sim-gated li {
+  font-size: var(--text-xs);
+  line-height: var(--leading-snug);
+}
+
+/* Score arithmetic: the spelled-out sums. */
+.sim-math {
+  margin: 0 0 6px;
+}
+.sim-math code {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-strong);
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+  display: inline-block;
+}
+
+/* Verdict ladder: five stacked rungs, the chosen one highlighted. */
+.sim-ladder {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  counter-reset: none;
+}
+.sim-rung {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.sim-rung-name {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--muted);
+}
+.sim-rung-why {
+  font-size: var(--text-xs);
+  line-height: var(--leading-snug);
+  color: var(--faint);
+}
+.sim-rung-mark {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  color: var(--text-strong);
+}
+.sim-r-pass { border-left-color: var(--verdict-pass); }
+.sim-r-tag { border-left-color: var(--verdict-tag); }
+.sim-r-decoy { border-left-color: var(--verdict-decoy); }
+.sim-r-throttle { border-left-color: var(--verdict-throttle); }
+.sim-r-ban { border-left-color: var(--verdict-ban); }
+.sim-r-pass .sim-rung-name { color: var(--verdict-pass); }
+.sim-r-tag .sim-rung-name { color: var(--verdict-tag); }
+.sim-r-decoy .sim-rung-name { color: var(--verdict-decoy); }
+.sim-r-throttle .sim-rung-name { color: var(--verdict-throttle); }
+.sim-r-ban .sim-rung-name { color: var(--verdict-ban); }
+.sim-rung.is-current {
+  border-color: var(--border-strong);
+  background: var(--accent-soft);
+  box-shadow: var(--shadow-1);
+}
+.sim-rung.is-current .sim-rung-why {
+  color: var(--muted);
+}
+.sim-rung.is-held .sim-rung-name {
+  font-weight: 700;
+}
+
+/* Action row + session readout already reuse .sim-kv / .badge. */
+.sim-action {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Golden vector stepper ---------- */
+
+.sim-stepper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.sim-stepper .sim-select {
+  width: auto;
+  min-width: 16rem;
+  flex: 1 1 16rem;
+}
+.sim-step {
+  padding: 6px 12px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.sim-step:hover:not(:disabled) {
+  border-color: var(--accent-line);
+  color: var(--text-strong);
+}
+.sim-step:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.sim-step-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.sim-reqline {
+  margin: 0 0 10px;
+  font-size: var(--text-sm);
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.sim-cmp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.sim-cmp {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--verdict-pass);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  overflow-wrap: anywhere;
+}
+.sim-cmp-k {
+  margin: 0 0 4px;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.sim-cmp p {
+  margin: 0;
+  color: var(--text);
+}
+.sim-cmp.is-bad {
+  border-left-color: var(--verdict-ban);
+  background: var(--verdict-ban-soft);
+}
+
+.sim-fallback {
+  margin: 10px 0 0;
+}
+
+/* ---------- Responsive ---------- */
+
+/* Composer collapses above the decision (source order does it already). */
+@media (max-width: 880px) {
+  .sim-grid {
+    grid-template-columns: 1fr;
+  }
+  .sim-rung {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+  .sim-rung-mark {
+    order: -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .sim-cmp-grid {
+    grid-template-columns: 1fr;
+  }
+  .sim-kv {
+    grid-template-columns: 1fr;
+    gap: 2px 0;
+  }
+  .sim-kv dd {
+    margin-bottom: 8px;
+  }
+  .sim-stepper .sim-select {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+/* ---------- Print: the last computed decision stays, the chrome goes. */
+
+@media print {
+  .sim-chipbar,
+  .sim-actions,
+  .sim-stepper,
+  .sim-gated summary {
+    display: none;
+  }
+  .sim-input,
+  .sim-select,
+  .sim-range-row,
+  .sim-panel {
+    border-color: var(--border);
+  }
+}

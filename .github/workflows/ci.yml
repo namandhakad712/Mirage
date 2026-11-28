@@ -95,3 +95,17 @@ jobs:
 
       - name: Test the worker
         run: cd packages/mirage-worker && npm test
+
+  simulator:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+
+      - name: Playground parity harness
+        run: node tools/check_simulator.mjs
