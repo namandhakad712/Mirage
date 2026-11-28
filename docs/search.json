@@ -1040,6 +1040,11 @@
           "text": "!ci(https://github.com/namandhakad712/Mirage/actions/workflows/ci.yml) Open-source tripwires and decoys that show you who is scanning your website and waste their time — set up in ten minutes, no security background needed. Mirage detects automated reconnaissance (scanner noise, AI attack agents, opportunistic crawlers) and answers it with inert decoys. It never breaks the site it protects, and it never pollutes the public web. Start here: docs/deploy/quickstart.md — from zero to a verified build, a config with a generated dashboard token, a running mirage serve proxy, or the Cloudflare Worker at the edge. Hosted docs: https://namandhakad712.github.io/Mirage/ — the whole guide, the specs, and a machine-readable surface (/llms.txt, /docs.json) for AI agents."
         },
         {
+          "id": "install",
+          "heading": "Install",
+          "text": "Two honest paths, no install script, nothing touches PATH: Release binaries — v0.1.0 ships static builds (linux amd64/arm64, macOS amd64/arm64, Windows amd64) with SHA-256 checksums. Download, chmod +x, and mirage version prints the stamped build. From source — git clone https://github.com/namandhakad712/Mirage && cd Mirage && make build with a Go 1.23 toolchain emits ./bin/mirage; make check runs every gate CI runs."
+        },
+        {
           "id": "what-it-is",
           "heading": "What it is",
           "text": "Watch — see who knocks: decoy hits, scanner paths, tool signatures. Tripwires — decoy paths (/.env, /.git/config, fake panels, fake source maps) served to suspicious sessions only. Real traffic untouched. Edge scoring — per-request deterministic scoring inside your own edge (Go middleware, or a Cloudflare Worker). Enforce — short, reversible, budget-capped bans through connectors (CrowdSec, Cloudflare, deny-maps), off by default. Each rung is useful alone and fully reversible. Moving up a rung is a config change; moving down is deleting one line."
@@ -1077,7 +1082,7 @@
         {
           "id": "status",
           "heading": "Status",
-          "text": "All components shipped and gated; no releases yet (the changelog tracks only Unreleased). What exists now: The constitution: fifteen invariants, charter, claims policy, known limits, ADRs. The normative specs (SIGNALS v1.1.0, adapter protocol v1, decoy catalog v1), the shared data files, and the golden vectors — 20 cases / 68 requests, hand-computed and machine cross-checked — plus the cross-engine render fixture. The Go core: model, config, store, events, enforce and connectors, race-tested. The decision engine (SIGNALS v1.1.0 in code) and the decoy data layer. The Go edge middleware and the mirage CLI — serve (transparent proxy + loopback dashboard), doctor, init, posture, replay, version, with --json machine output on the reporting commands. The fault-injection lab proving the invariants hold under store, queue, connector, budget, deadline and kill-switch faults. The Cloudflare Worker — deployable today, response-identical to the Go edge on the shared vectors. The build layer: Makefile gates, CI (Go + worker + docs), the full example config, and the hosted documentation site with its sync and integrity tooling. Version 1.0 is defined by exit criteria, not a date — see docs/design/MIRAGE-DESIGN.md section 12. Watch CHANGELOG.md for progress."
+          "text": "All components shipped and gated; the first tagged release is v0.1.0 (static binaries + SHA-256 checksums on the releases page). What exists now: The constitution: fifteen invariants, charter, claims policy, known limits, ADRs. The normative specs (SIGNALS v1.1.0, adapter protocol v1, decoy catalog v1), the shared data files, and the golden vectors — 20 cases / 68 requests, hand-computed and machine cross-checked — plus the cross-engine render fixture. The Go core: model, config, store, events, enforce and connectors, race-tested. The decision engine (SIGNALS v1.1.0 in code) and the decoy data layer. The Go edge middleware and the mirage CLI — serve (transparent proxy + loopback dashboard), doctor, init, posture, replay, version, with --json machine output on the reporting commands. The fault-injection lab proving the invariants hold under store, queue, connector, budget, deadline and kill-switch faults. The Cloudflare Worker — deployable today, response-identical to the Go edge on the shared vectors. The build layer: Makefile gates, CI (Go + worker + docs), the full example config, and the hosted documentation site with its sync and integrity tooling. Version 1.0 is defined by exit criteria, not a date — see docs/design/MIRAGE-DESIGN.md section 12. Watch CHANGELOG.md for progress."
         },
         {
           "id": "license",
@@ -1113,6 +1118,11 @@
           "id": "unreleased",
           "heading": "Unreleased",
           "text": ""
+        },
+        {
+          "id": "010---2026-11-28",
+          "heading": "0.1.0 - 2026-11-28",
+          "text": "First tagged release. Ships the Go core, the mirage CLI, the Cloudflare Worker port and the documentation site — including the interactive verdict playground (/playground.html): a spec-exact, zero-dependency, client-side simulator of the decision engine whose parity against all 20 golden-vector cases (68 requests, exact) is enforced in CI. Release binaries — static builds for linux (amd64, arm64), macOS (amd64, arm64) and Windows (amd64), each with the version and commit stamped into mirage version, plus a SHA-256 checksums file — are attached to the GitHub release by .github/workflows/release.yml, which refuses to publish unless the full make check gate is green."
         },
         {
           "id": "added--2026-11-27-docs-site-elevation-round",
@@ -1337,7 +1347,7 @@
         {
           "id": "",
           "heading": "",
-          "text": "Before anyone else says \"but it didn't stop X\": here is what Mirage cannot do. This page is a feature, not an apology. It grows only by adding measured honesty — no release has shipped yet; the changelog tracks the work under Unreleased."
+          "text": "Before anyone else says \"but it didn't stop X\": here is what Mirage cannot do. This page is a feature, not an apology. It grows only by adding measured honesty — the first tagged release is v0.1.0; work since then tracks under Unreleased in the changelog."
         },
         {
           "id": "detection-limits",

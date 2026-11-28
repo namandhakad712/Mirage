@@ -1,14 +1,31 @@
 {
   "name": "@mirage-shield/mirage-worker",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "license": "Apache-2.0",
   "description": "Mirage edge adapter: Cloudflare Worker port of the SIGNALS v1.1.0 decision engine",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/namandhakad712/Mirage.git",
+    "directory": "packages/mirage-worker"
+  },
+  "homepage": "https://namandhakad712.github.io/Mirage/deploy/cloudflare-worker.html",
+  "bugs": "https://github.com/namandhakad712/Mirage/issues",
+  "keywords": [
+    "cloudflare-workers",
+    "security",
+    "deception",
+    "tripwires",
+    "decoys",
+    "bot-management",
+    "edge"
+  ],
+  "files": ["src", "dist", "scripts", "README.md", "LICENSE"],
   "scripts": {
     "build": "node scripts/build.mjs",
     "test": "vitest run",
-    "gen": "node scripts/gen-data.mjs"
+    "gen": "node scripts/gen-data.mjs",
+    "prepublishOnly": "npm test && npm run build"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4",

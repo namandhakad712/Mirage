@@ -2684,6 +2684,19 @@ running `mirage serve` proxy, or the Cloudflare Worker at the edge.
 guide, the specs, and a machine-readable surface (`/llms.txt`,
 `/docs.json`) for AI agents.
 
+## Install
+
+Two honest paths, no install script, nothing touches `PATH`:
+
+- **Release binaries** —
+  [v0.1.0](https://github.com/namandhakad712/Mirage/releases/tag/v0.1.0)
+  ships static builds (linux amd64/arm64, macOS amd64/arm64, Windows
+  amd64) with SHA-256 checksums. Download, `chmod +x`, and
+  `mirage version` prints the stamped build.
+- **From source** — `git clone https://github.com/namandhakad712/Mirage
+  && cd Mirage && make build` with a Go 1.23 toolchain emits
+  `./bin/mirage`; `make check` runs every gate CI runs.
+
 ## What it is
 
 - **Watch** — see who knocks: decoy hits, scanner paths, tool signatures.
@@ -2798,8 +2811,9 @@ described in [Architecture](#architecture) above.
 
 ## Status
 
-All components shipped and gated; no releases yet (the changelog tracks
-only `[Unreleased]`). What exists now:
+All components shipped and gated; the first tagged release is
+[v0.1.0](https://github.com/namandhakad712/Mirage/releases/tag/v0.1.0)
+(static binaries + SHA-256 checksums on the releases page). What exists now:
 
 - The constitution: fifteen invariants, charter, claims policy, known
   limits, ADRs.
@@ -2857,6 +2871,20 @@ All notable changes to Mirage are documented here. Format follows
 [SemVer](https://semver.org/). Dates are UTC.
 
 ## [Unreleased]
+
+## [0.1.0] - 2026-11-28
+
+First tagged release. Ships the Go core, the `mirage` CLI, the
+Cloudflare Worker port and the documentation site — including the
+interactive verdict playground (`/playground.html`): a spec-exact,
+zero-dependency, client-side simulator of the decision engine whose
+parity against all 20 golden-vector cases (68 requests, exact) is
+enforced in CI. Release binaries —
+static builds for linux (amd64, arm64), macOS (amd64, arm64) and
+Windows (amd64), each with the version and commit stamped into
+`mirage version`, plus a SHA-256 checksums file — are attached to the
+GitHub release by `.github/workflows/release.yml`, which refuses to
+publish unless the full `make check` gate is green.
 
 ### Added — 2026-11-27 (docs-site elevation round)
 
@@ -3394,9 +3422,10 @@ Source: known-limits.md — https://namandhakad712.github.io/Mirage/known-limits
 
 Before anyone else says "but it didn't stop X": here is what Mirage cannot
 do. This page is a feature, not an apology. It grows only by adding
-measured honesty — no release has shipped yet; the
-[changelog]({{ site.baseurl }}/changelog.html) tracks the work under
-`[Unreleased]`.
+measured honesty — the first tagged release is
+[v0.1.0](https://github.com/namandhakad712/Mirage/releases/tag/v0.1.0);
+work since then tracks under `[Unreleased]` in the
+[changelog]({{ site.baseurl }}/changelog.html).
 
 ## Detection limits
 

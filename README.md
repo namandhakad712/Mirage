@@ -16,6 +16,19 @@ running `mirage serve` proxy, or the Cloudflare Worker at the edge.
 guide, the specs, and a machine-readable surface (`/llms.txt`,
 `/docs.json`) for AI agents.
 
+## Install
+
+Two honest paths, no install script, nothing touches `PATH`:
+
+- **Release binaries** —
+  [v0.1.0](https://github.com/namandhakad712/Mirage/releases/tag/v0.1.0)
+  ships static builds (linux amd64/arm64, macOS amd64/arm64, Windows
+  amd64) with SHA-256 checksums. Download, `chmod +x`, and
+  `mirage version` prints the stamped build.
+- **From source** — `git clone https://github.com/namandhakad712/Mirage
+  && cd Mirage && make build` with a Go 1.23 toolchain emits
+  `./bin/mirage`; `make check` runs every gate CI runs.
+
 ## What it is
 
 - **Watch** — see who knocks: decoy hits, scanner paths, tool signatures.
@@ -130,8 +143,9 @@ described in [Architecture](#architecture) above.
 
 ## Status
 
-All components shipped and gated; no releases yet (the changelog tracks
-only `[Unreleased]`). What exists now:
+All components shipped and gated; the first tagged release is
+[v0.1.0](https://github.com/namandhakad712/Mirage/releases/tag/v0.1.0)
+(static binaries + SHA-256 checksums on the releases page). What exists now:
 
 - The constitution: fifteen invariants, charter, claims policy, known
   limits, ADRs.

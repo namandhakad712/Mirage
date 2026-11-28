@@ -1,0 +1,49 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install PyYAML for the vector generator
+        run: pip install -q PyYAML
+
+      - name: Full quality gates (the same gate CI runs)
+        run: make check
+
+      - name: Build release binaries
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          COMMIT="${GITHUB_SHA}"
+          mkdir -p dist
+          for os_arch in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64; do
+            os="${os_arch%/*}"; arch="${os_arch#*/}"
+            name="mirage_${VERSION}_${os}_${arch}"
+            CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build \
+              -ldflags "-X main.version=${VERSION} -X main.commit=${COMMIT}" \
+              -o "dist/${name}" ./cmd/mirage
+            if [ "$os" = "windows" ]; then mv "dist/${name}" "dist/${name}.exe"; fi
+          done
+          cd dist && sha256sum mirage_* > checksums.txt
+
+      - name: Create the GitHub release with binaries
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" dist/* \
+            --title "Mirage ${GITHUB_REF_NAME}" \
+            --notes "Static binaries built from ${GITHUB_SHA} with \`make check\` green. The human changelog lives at https://namandhakad712.github.io/Mirage/changelog.html; the guide and the interactive verdict playground at https://namandhakad712.github.io/Mirage/."

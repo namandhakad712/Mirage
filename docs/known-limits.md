@@ -7,9 +7,10 @@ order: 6
 ---
 Before anyone else says "but it didn't stop X": here is what Mirage cannot
 do. This page is a feature, not an apology. It grows only by adding
-measured honesty — no release has shipped yet; the
-[changelog]({{ site.baseurl }}/changelog.html) tracks the work under
-`[Unreleased]`.
+measured honesty — the first tagged release is
+[v0.1.0](https://github.com/namandhakad712/Mirage/releases/tag/v0.1.0);
+work since then tracks under `[Unreleased]` in the
+[changelog]({{ site.baseurl }}/changelog.html).
 
 ## Detection limits
 

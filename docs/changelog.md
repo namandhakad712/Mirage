@@ -12,6 +12,20 @@ All notable changes to Mirage are documented here. Format follows
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-28
+
+First tagged release. Ships the Go core, the `mirage` CLI, the
+Cloudflare Worker port and the documentation site — including the
+interactive verdict playground (`/playground.html`): a spec-exact,
+zero-dependency, client-side simulator of the decision engine whose
+parity against all 20 golden-vector cases (68 requests, exact) is
+enforced in CI. Release binaries —
+static builds for linux (amd64, arm64), macOS (amd64, arm64) and
+Windows (amd64), each with the version and commit stamped into
+`mirage version`, plus a SHA-256 checksums file — are attached to the
+GitHub release by `.github/workflows/release.yml`, which refuses to
+publish unless the full `make check` gate is green.
+
 ### Added — 2026-11-27 (docs-site elevation round)
 
 - **Docs-site elevation round** (visual + content + machine surface):
