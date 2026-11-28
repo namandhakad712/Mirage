@@ -31,6 +31,10 @@ Repository: https://github.com/namandhakad712/Mirage · License: AGPL-3.0 · Sig
 - [Decoy Catalog](https://namandhakad712.github.io/Mirage/spec/DECOY-CATALOG.html): The v1 decoy catalog format: personas, entries, leads, tokens, reserved values and validation rules.
 - [Golden Vectors — Hand Computed](https://namandhakad712.github.io/Mirage/spec/golden-vectors/HAND-COMPUTED.html): The arithmetic behind all 20 golden vector cases, computed by hand and cross-checked by tools/gen_vectors.py.
 
+## Playground
+
+- [Verdict Playground](https://namandhakad712.github.io/Mirage/playground.html): Score a request against the real decision engine, live in the browser: 11 signals, verdict ladder, mode actions and the 20 golden vector cases — zero network.
+
 ## Deployment
 
 - [Quickstart](https://namandhakad712.github.io/Mirage/deploy/quickstart.html): The shortest honest path to a running Mirage: build, check, configure, watch the first decisions.

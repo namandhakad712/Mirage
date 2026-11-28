@@ -135,6 +135,18 @@
       ]
     },
     {
+      "id": "playground",
+      "title": "Playground",
+      "pages": [
+        {
+          "title": "Verdict Playground",
+          "description": "Score a request against the real decision engine, live in the browser: 11 signals, verdict ladder, mode actions and the 20 golden vector cases — zero network.",
+          "path": "playground.md",
+          "url": "/Mirage/playground.html"
+        }
+      ]
+    },
+    {
       "id": "deploy",
       "title": "Deployment",
       "pages": [
