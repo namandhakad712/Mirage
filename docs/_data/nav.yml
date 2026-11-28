@@ -68,6 +68,13 @@ sections:
         url: /spec/golden-vectors/HAND-COMPUTED.html
         description: "20 hand-computed cases, 68 requests."
 
+  - id: playground
+    title: Playground
+    items:
+      - title: Verdict Playground
+        url: /playground.html
+        description: "Score a request against the real engine, live in the browser."
+
   - id: deploy
     title: Deployment
     items:
